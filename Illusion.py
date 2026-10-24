@@ -105,10 +105,10 @@ html_code = """<!DOCTYPE html>
             width: 150px;
             border-radius: 12px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.9);
-            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.8s ease, opacity 0.5s ease;
+            transition: transform 0.4s ease-in-out, filter 0.4s ease-in-out, opacity 0.4s ease-in-out;
         }
 
-        /* Wackel-Effekt während des Schüttelns */
+        /* Wackel-Effekt beim Schütteln */
         @keyframes shakeCard {
             0% { transform: translate(0, 0) rotate(0deg); }
             20% { transform: translate(-3px, 3px) rotate(-2deg); }
@@ -122,11 +122,11 @@ html_code = """<!DOCTYPE html>
             animation: shakeCard 0.15s infinite ease-in-out;
         }
 
-        /* Visueller Morphing-Effekt zur Zielkarte */
+        /* Echter Verwandlungs-Morphing-Effekt (Flip & Fade ohne Größenänderung) */
         .morphing {
-            transform: scale(0.4) rotate(15deg);
-            filter: blur(12px) brightness(1.8);
-            opacity: 0.1;
+            transform: perspective(600px) rotateY(90deg) scale(0.95);
+            filter: brightness(1.3);
+            opacity: 0.2;
         }
 
         .action-container {
@@ -253,7 +253,7 @@ html_code = """<!DOCTYPE html>
 
     <!-- Step 3: Magic Execution Screen -->
     <div id="magic-section" class="hidden input-group">
-        <div id="status-perf">Analysiere Schwingung...</div>
+        <div id="status">Scanne Frequenz...</div>
         <div class="card-box">
             <img id="card-display" class="card-img" src="" alt="Card">
         </div>
@@ -376,7 +376,6 @@ html_code = """<!DOCTYPE html>
 
             if (speed > 350) {
                 shakeProgress += 1;
-                // Karte fängt an zu wackeln beim Schütteln
                 cardImg.classList.add('shaking');
                 
                 // ca. 3-4 Sekunden kontinuierliches Schütteln
@@ -385,7 +384,6 @@ html_code = """<!DOCTYPE html>
                     morphCard();
                 }
             } else {
-                // Wenn kurz nicht geschüttelt wird, Wackeln langsam beruhigen
                 if(shakeProgress > 0) {
                     shakeProgress = Math.max(0, shakeProgress - 0.5);
                     if(shakeProgress === 0) cardImg.classList.remove('shaking');
@@ -401,19 +399,15 @@ html_code = """<!DOCTYPE html>
         currentState = 'right';
         const cardImg = document.getElementById('card-display');
         
-        // Visueller Morphing-Effekt (Startkarte schrumpft & verschwimmt)
+        // Echter visueller Morphing-Effekt (Flip & Überblenden ohne Zoom)
         cardImg.classList.add('morphing');
 
         setTimeout(() => {
-            // Bild zur Zielkarte wechseln während sie unscharf/klein ist
             cardImg.src = `https://deckofcardsapi.com/static/img/${targetCardApi}.png`;
-            
-            // Zurück in Normalgröße morphen
             cardImg.classList.remove('morphing');
-            document.getElementById('status-perf').innerText = "Bereit";
             
             document.getElementById('find-btn').classList.remove('hidden');
-        }, 400);
+        }, 350);
     }
 
     function showLocation() {

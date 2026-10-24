@@ -1,17 +1,14 @@
 import streamlit as st
 
-# Streamlit Konfiguration für echtes Vollbild ohne weiße/blaue Ränder
 st.set_page_config(page_title="Magic App", layout="wide", initial_sidebar_state="collapsed")
 
-html_code = """
-<!DOCTYPE html>
+html_code = """<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Magic Matrix</title>
     <style>
-        /* Kompletter Reset für echtes Schwarz ohne Streamlit-Balken */
         html, body {
             margin: 0;
             padding: 0;
@@ -26,7 +23,6 @@ html_code = """
             justify-content: center;
         }
         
-        /* Versteckt alle Streamlit UI Elemente, die blaue/weiße Ränder erzeugen */
         #MainMenu, header, footer { visibility: hidden; }
 
         .container {
@@ -134,15 +130,13 @@ html_code = """
 <body>
 
 <div class="container">
-    <!-- Eingabebereiche für die mathematische Matrix -->
     <div id="input-section" class="input-group">
-        <input type="text" id="code-input" placeholder="Code eingeben (z.B. 1219-Z3672)">
-        <input type="text" id="pos-input" placeholder="Ungefähre Position im Deck">
+        <input type="text" id="code-input" placeholder="Code eingeben">
+        <input type="text" id="pos-input" placeholder="Ungefahre Position im Deck">
         <input type="date" id="date-input">
         <button onclick="startMagic()">Matrix berechnen</button>
     </div>
 
-    <!-- Magie & Ausgabe -->
     <div id="magic-section" class="hidden">
         <div id="status">Berechne Quanten-Resonanz...</div>
         <div class="card-box">
@@ -165,7 +159,6 @@ html_code = """
 
     let currentState = 'stargazer';
     
-    // Physik-Variablen für sanfte Tisch-Rotation und Zurückkehren
     let currentRotation = 0;
     let targetRotation = 0;
     
@@ -174,7 +167,6 @@ html_code = """
 
     function startMagic() {
         const code = document.getElementById('code-input').value.trim();
-        const pos = document.getElementById('pos-input').value.trim();
         
         if(!code) {
             alert("Bitte gib einen Code ein!");
@@ -184,7 +176,6 @@ html_code = """
         document.getElementById('input-section').classList.add('hidden');
         document.getElementById('magic-section').classList.remove('hidden');
 
-        // Startet mit Stargazer und dem eingegebenen Code[cite: 1]
         document.getElementById('card-display').src = cardStargazer;
         document.getElementById('code-text').innerText = code;
         currentState = 'stargazer';
@@ -214,7 +205,6 @@ html_code = """
         }
     }
 
-    // Schüttel-Erkennung (Morphing zu Archangels & Code-Wechsel)
     function handleMotion(e) {
         let current = e.accelerationIncludingGravity;
         if (!current) return;
@@ -244,11 +234,10 @@ html_code = """
         cardImg.style.opacity = "0.2";
 
         setTimeout(() => {
-            // Automatischer Wechsel zum erzwungenen Archangels-Code
-            codeText.innerText = "0423-D3396";[cite: 2]
+            codeText.innerText = "0423-D3396";
             document.getElementById('status').innerText = "Matrix synchronisiert";
             
-            cardImg.src = cardArchangels;[cite: 2]
+            cardImg.src = cardArchangels;
             cardImg.style.transform = "scale(1)";
             cardImg.style.opacity = "1";
             
@@ -256,6 +245,32 @@ html_code = """
         }, 300);
     }
 
-    // Tisch-Rotation: Reagiert aufs Drehen auf dem Tisch & kehrt butterweich zurück
     function handleOrientation(e) {
-        if (currentState !==
+        if (currentState !== 'archangels') return;
+        
+        let alpha = e.alpha; 
+        
+        if (alpha !== null) {
+            targetRotation = (alpha % 360) * 0.5;
+        }
+    }
+
+    function animatePhysics() {
+        const arrow = document.getElementById('vector-arrow');
+        if (arrow) {
+            if (currentState === 'archangels' && Math.abs(targetRotation - currentRotation) < 0.1) {
+                targetRotation *= 0.95;
+            }
+            
+            currentRotation += (targetRotation - currentRotation) * 0.08;
+            arrow.style.transform = `rotate(${currentRotation}deg)`;
+        }
+        requestAnimationFrame(animatePhysics);
+    }
+    requestAnimationFrame(animatePhysics);
+</script>
+
+</body>
+</html>"""
+
+st.components.v1.html(html_code, height=750, scrolling=False)

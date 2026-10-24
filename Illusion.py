@@ -41,11 +41,11 @@ html_code = """<!DOCTYPE html>
             width: 100%;
         }
 
-        input {
+        select, input {
             width: 100% !important;
             height: 48px !important;
             padding: 0 14px !important;
-            font-size: 16px !important;
+            font-size: 15px !important;
             border-radius: 10px !important;
             border: 1px solid #27272a !important;
             background: #09090b !important;
@@ -53,8 +53,11 @@ html_code = """<!DOCTYPE html>
             text-align: center !important;
             outline: none !important;
             box-sizing: border-box !important;
-            letter-spacing: 1px !important;
             -webkit-appearance: none;
+        }
+
+        select {
+            text-align-last: center;
         }
 
         input::placeholder {
@@ -76,6 +79,14 @@ html_code = """<!DOCTYPE html>
 
         button:active {
             background: #27272a !important;
+        }
+
+        .code-preview {
+            font-family: monospace;
+            font-size: 15px;
+            color: #a1a1aa;
+            letter-spacing: 1.5px;
+            margin: 4px 0;
         }
 
         .card-box {
@@ -130,18 +141,92 @@ html_code = """<!DOCTYPE html>
             text-transform: uppercase;
             letter-spacing: 1.5px;
         }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: #27272a;
+            margin: 15px 0;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="input-section" class="input-group">
-        <input type="text" id="code-input" placeholder="Code eingeben (z.B. 1219-Z3672)">
+    <!-- Setup Screen: Versteckte Kartenauswahl & Code-Generierung -->
+    <div id="setup-section" class="input-group">
+        <div id="status">Geheimes Setup</div>
+        <select id="secret-card-select" onchange="updateCodePreview()">
+            <!-- Pik -->
+            <option value="1219-Z3672">Pik Ass (PA)</option>
+            <option value="1219-Z3673">Pik 2</option>
+            <option value="1219-Z3674">Pik 3</option>
+            <option value="1219-Z3675">Pik 4</option>
+            <option value="1219-Z3676">Pik 5</option>
+            <option value="1219-Z3677">Pik 6</option>
+            <option value="1219-Z3678">Pik 7</option>
+            <option value="1219-Z3679">Pik 8</option>
+            <option value="1219-Z3680">Pik 9</option>
+            <option value="1219-Z3681">Pik 10</option>
+            <option value="1219-Z3682">Pik Bube (PB)</option>
+            <option value="1219-Z3683">Pik Dame (PD)</option>
+            <option value="1219-Z3684">Pik König (PK)</option>
+            <!-- Herz -->
+            <option value="1219-Z3685">Herz Ass (HA)</option>
+            <option value="1219-Z3686">Herz 2</option>
+            <option value="1219-Z3687">Herz 3</option>
+            <option value="1219-Z3688">Herz 4</option>
+            <option value="1219-Z3689">Herz 5</option>
+            <option value="1219-Z3690">Herz 6</option>
+            <option value="1219-Z3691">Herz 7</option>
+            <option value="1219-Z3692">Herz 8</option>
+            <option value="1219-Z3693">Herz 9</option>
+            <option value="1219-Z3694">Herz 10</option>
+            <option value="1219-Z3695">Herz Bube (HB)</option>
+            <option value="1219-Z3696">Herz Dame (HD)</option>
+            <option value="1219-Z3697">Herz König (HK)</option>
+            <!-- Kreuz -->
+            <option value="1219-Z3698">Kreuz König (KK)</option>
+            <option value="1219-Z3699">Kreuz Dame (KD)</option>
+            <option value="1219-Z3700">Kreuz Bube (KB)</option>
+            <option value="1219-Z3701">Kreuz 10</option>
+            <option value="1219-Z3702">Kreuz 9</option>
+            <option value="1219-Z3703">Kreuz 8</option>
+            <option value="1219-Z3704">Kreuz 7</option>
+            <option value="1219-Z3705">Kreuz 6</option>
+            <option value="1219-Z3706">Kreuz 5</option>
+            <option value="1219-Z3707">Kreuz 4</option>
+            <option value="1219-Z3708">Kreuz 3</option>
+            <option value="1219-Z3709">Kreuz 2</option>
+            <option value="1219-Z3710">Kreuz Ass (KA)</option>
+            <!-- Karo -->
+            <option value="1219-Z3711">Karo König</option>
+            <option value="1219-Z3712">Karo Dame</option>
+            <option value="1219-Z3713">Karo Bube</option>
+            <option value="1219-Z3714">Karo 10</option>
+            <option value="1219-Z3715">Karo 9</option>
+            <option value="1219-Z3716">Karo 8</option>
+            <option value="1219-Z3717">Karo 7</option>
+            <option value="1219-Z3718">Karo 6</option>
+            <option value="1219-Z3719">Karo 5</option>
+            <option value="1219-Z3720">Karo 4</option>
+            <option value="1219-Z3721">Karo 3</option>
+            <option value="1219-Z3722">Karo 2</option>
+            <option value="1219-Z3723">Karo Ass</option>
+        </select>
+        
+        <div class="code-preview" id="code-preview">1219-Z3672</div>
+        
+        <div class="divider"></div>
+
+        <!-- Performance Input Screen -->
+        <input type="text" id="code-input" placeholder="Code eingeben">
         <button onclick="startMagic()">Analysieren</button>
     </div>
 
+    <!-- Magic Execution Screen -->
     <div id="magic-section" class="hidden input-group">
-        <div id="status">Scanne Frequenz...</div>
+        <div id="status-perf">Scanne Frequenz...</div>
         <div class="card-box">
             <img id="card-display" class="card-img" src="" alt="Card">
         </div>
@@ -157,19 +242,15 @@ html_code = """<!DOCTYPE html>
 
 <script>
     const cardDatabase = {
-        // Pik (Spades)
         "1219-Z3672": "AS", "1219-Z3673": "2S", "1219-Z3674": "3S", "1219-Z3675": "4S",
         "1219-Z3676": "5S", "1219-Z3677": "6S", "1219-Z3678": "7S", "1219-Z3679": "8S",
         "1219-Z3680": "9S", "1219-Z3681": "0S", "1219-Z3682": "JS", "1219-Z3683": "QS", "1219-Z3684": "KS",
-        // Herz (Hearts)
         "1219-Z3685": "AH", "1219-Z3686": "2H", "1219-Z3687": "3H", "1219-Z3688": "4H",
         "1219-Z3689": "5H", "1219-Z3690": "6H", "1219-Z3691": "7H", "1219-Z3692": "8H",
         "1219-Z3693": "9H", "1219-Z3694": "0H", "1219-Z3695": "JH", "1219-Z3696": "QH", "1219-Z3697": "KH",
-        // Kreuz (Clubs)
         "1219-Z3698": "KC", "1219-Z3699": "QC", "1219-Z3700": "JC", "1219-Z3701": "0C",
         "1219-Z3702": "9C", "1219-Z3703": "8C", "1219-Z3704": "7C", "1219-Z3705": "6C",
         "1219-Z3706": "5C", "1219-Z3707": "4C", "1219-Z3708": "3C", "1219-Z3709": "2C", "1219-Z3710": "AC",
-        // Karo (Diamonds)
         "1219-Z3711": "KD", "1219-Z3712": "QD", "1219-Z3713": "JD", "1219-Z3714": "0D",
         "1219-Z3715": "9D", "1219-Z3716": "8D", "1219-Z3717": "7D", "1219-Z3718": "6D",
         "1219-Z3719": "5D", "1219-Z3720": "4D", "1219-Z3721": "3D", "1219-Z3722": "2D", "1219-Z3723": "AD"
@@ -182,17 +263,25 @@ html_code = """<!DOCTYPE html>
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastUpdate = 0;
 
+    // Zeigt beim Ändern im Dropdown sofort den Code an
+    function updateCodePreview() {
+        const selectedVal = document.getElementById('secret-card-select').value;
+        document.getElementById('code-preview').innerText = selectedVal;
+    }
+    // Initialer Aufruf
+    updateCodePreview();
+
     function startMagic() {
         const codeInput = document.getElementById('code-input').value.trim().toUpperCase();
         
         if(!cardDatabase[codeInput]) {
-            alert("Ungültiger Code! Bitte einen Code aus deiner Liste eingeben.");
+            alert("Ungültiger Code! Bitte einen Code eingeben.");
             return;
         }
 
         targetCardApi = cardDatabase[codeInput];
 
-        document.getElementById('input-section').classList.add('hidden');
+        document.getElementById('setup-section').classList.add('hidden');
         document.getElementById('magic-section').classList.remove('hidden');
 
         document.getElementById('card-display').src = wrongCard;
@@ -246,9 +335,8 @@ html_code = """<!DOCTYPE html>
             cardImg.src = `https://deckofcardsapi.com/static/img/${targetCardApi}.png`;
             cardImg.style.transform = "scale(1)";
             cardImg.style.opacity = "1";
-            document.getElementById('status').innerText = "Matrix korrigiert";
+            document.getElementById('status-perf').innerText = "Matrix korrigiert";
             
-            // Zeige den Button "Position finden" erst nach der Kartenverwandlung
             document.getElementById('find-btn').classList.remove('hidden');
         }, 300);
     }
@@ -257,7 +345,7 @@ html_code = """<!DOCTYPE html>
         document.getElementById('find-btn').classList.add('hidden');
         const locationText = document.getElementById('location-text');
         locationText.classList.add('visible');
-        document.getElementById('status').innerText = "Standort lokalisiert";
+        document.getElementById('status-perf').innerText = "Standort lokalisiert";
     }
 </script>
 

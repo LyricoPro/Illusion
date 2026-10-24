@@ -25,7 +25,7 @@ html_code = """<!DOCTYPE html>
         
         #MainMenu, header, footer { visibility: hidden !important; }
 
-        /* Unsichtbarer Schalter oben links */
+        /* Unsichtbarer Schalter oben links zum Öffnen des Setups */
         .secret-toggle {
             position: fixed;
             top: 10px;
@@ -122,7 +122,6 @@ html_code = """<!DOCTYPE html>
             animation: shakeCard 0.12s infinite ease-in-out;
         }
 
-        /* Unauffälliges verschwommenes Überblenden während der Schüttelbewegung */
         .morph-blur {
             filter: blur(6px) opacity(0.4);
         }
@@ -169,12 +168,18 @@ html_code = """<!DOCTYPE html>
 </head>
 <body>
 
-    <!-- Unsichtbarer Schalter oben links -->
+    <!-- Unsichtbarer Schalter oben links zum Aufrufen des Setups -->
     <div class="secret-toggle" onclick="toggleScreen()" title="Switch"></div>
 
 <div class="container">
-    <!-- Step 1: Geheimes Setup -->
-    <div id="setup-section" class="input-group">
+    <!-- Step 1: Code-Eingabe (Startet direkt im Zuschauermodus) -->
+    <div id="input-section" class="input-group">
+        <input type="text" id="code-input" placeholder="Code eingeben (z.B. 1219-Z3672)">
+        <button onclick="startMagic()">Analysieren</button>
+    </div>
+
+    <!-- Step 2: Geheimes Setup (Öffnet sich erst nach Klick auf die versteckte Ecke) -->
+    <div id="setup-section" class="input-group hidden">
         <div id="status">Geheimes Setup</div>
         
         <select id="secret-card-select">
@@ -242,16 +247,8 @@ html_code = """<!DOCTYPE html>
         <button onclick="confirmCard()">Karte bestätigen</button>
     </div>
 
-    <!-- Step 2: Code-Eingabe -->
-    <div id="input-section" class="input-group hidden">
-        <div id="status-input">Bereit für Eingabe</div>
-        <input type="text" id="code-input" placeholder="Code eingeben (z.B. 1219-Z3672)">
-        <button onclick="startMagic()">Analysieren</button>
-    </div>
-
     <!-- Step 3: Magic Execution Screen -->
     <div id="magic-section" class="hidden input-group">
-        <div id="status">Scanne Frequenz...</div>
         <div class="card-box">
             <img id="card-display" class="card-img" src="" alt="Card">
         </div>
@@ -294,19 +291,19 @@ html_code = """<!DOCTYPE html>
     let lastUpdate = 0;
     let shakeProgress = 0;
 
+    // Schaltet zwischen Eingabe-Screen und Setup-Screen um
     function toggleScreen() {
         const setupSec = document.getElementById('setup-section');
         const inputSec = document.getElementById('input-section');
         const magicSec = document.getElementById('magic-section');
 
-        if (!setupSec.classList.contains('hidden')) {
-            setupSec.classList.add('hidden');
-            inputSec.classList.remove('hidden');
-            document.getElementById('status-input').innerText = "Bereit für Eingabe";
-        } else {
+        if (!inputSec.classList.contains('hidden')) {
             inputSec.classList.add('hidden');
-            magicSec.classList.add('hidden');
             setupSec.classList.remove('hidden');
+        } else {
+            setupSec.classList.add('hidden');
+            magicSec.classList.add('hidden');
+            inputSec.classList.remove('hidden');
         }
     }
 
@@ -319,7 +316,6 @@ html_code = """<!DOCTYPE html>
 
         document.getElementById('setup-section').classList.add('hidden');
         document.getElementById('input-section').classList.remove('hidden');
-        document.getElementById('status-input').innerText = "Bereit für Eingabe";
     }
 
     function startMagic() {
@@ -376,7 +372,6 @@ html_code = """<!DOCTYPE html>
                 shakeProgress += 1;
                 cardImg.classList.add('shaking');
                 
-                // Nach ca. 3-4 Sekunden lückenlos während des Schüttelns wechseln
                 if (shakeProgress >= 18) {
                     morphInMotion();
                 }
@@ -392,19 +387,16 @@ html_code = """<!DOCTYPE html>
         }
     }
 
-    // Unauffälliger Switch während der Wackelbewegung
     function morphInMotion() {
         currentState = 'right';
         const cardImg = document.getElementById('card-display');
         
-        // Ganz kurzes Verschwimmen genau mitten in der Schüttelbewegung
         cardImg.classList.add('morph-blur');
 
         setTimeout(() => {
             cardImg.src = `https://deckofcardsapi.com/static/img/${targetCardApi}.png`;
             cardImg.classList.remove('morph-blur');
             
-            // Nach kurzer Verzögerung das Schütteln beenden und Zielkarte sauber stehen lassen
             setTimeout(() => {
                 cardImg.classList.remove('shaking');
                 document.getElementById('find-btn').classList.remove('hidden');

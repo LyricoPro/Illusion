@@ -138,7 +138,7 @@ html_code = """<!DOCTYPE html>
 
 <div class="container">
     <div id="input-section" class="input-group">
-        <input type="text" id="code-input" placeholder="Code eingeben">
+        <input type="text" id="code-input" placeholder="Code eingeben (z.B. 1219-Z3672)">
         <button onclick="startMagic()">Analysieren</button>
     </div>
 
@@ -161,26 +161,50 @@ html_code = """<!DOCTYPE html>
 </div>
 
 <script>
-    const wrongCard = "https://deckofcardsapi.com/static/img/0C.png";
-    const rightCard = "https://deckofcardsapi.com/static/img/4S.png";
+    // Vollständige Code-Datenbank für alle 52 Karten (API Kürzel: AS, 2S-KS, AH-KH, KC-AC, KD-AD)
+    const cardDatabase = {
+        // Pik (Spades)
+        "1219-Z3672": "AS", "1219-Z3673": "2S", "1219-Z3674": "3S", "1219-Z3675": "4S",
+        "1219-Z3676": "5S", "1219-Z3677": "6S", "1219-Z3678": "7S", "1219-Z3679": "8S",
+        "1219-Z3680": "9S", "1219-Z3681": "0S", "1219-Z3682": "JS", "1219-Z3683": "QS", "1219-Z3684": "KS",
+        // Herz (Hearts)
+        "1219-Z3685": "AH", "1219-Z3686": "2H", "1219-Z3687": "3H", "1219-Z3688": "4H",
+        "1219-Z3689": "5H", "1219-Z3690": "6H", "1219-Z3691": "7H", "1219-Z3692": "8H",
+        "1219-Z3693": "9H", "1219-Z3694": "0H", "1219-Z3695": "JH", "1219-Z3696": "QH", "1219-Z3697": "KH",
+        // Kreuz (Clubs)
+        "1219-Z3698": "KC", "1219-Z3699": "QC", "1219-Z3700": "JC", "1219-Z3701": "0C",
+        "1219-Z3702": "9C", "1219-Z3703": "8C", "1219-Z3704": "7C", "1219-Z3705": "6C",
+        "1219-Z3706": "5C", "1219-Z3707": "4C", "1219-Z3708": "3C", "1219-Z3709": "2C", "1219-Z3710": "AC",
+        // Karo (Diamonds)
+        "1219-Z3711": "KD", "1219-Z3712": "QD", "1219-Z3713": "JD", "1219-Z3714": "0D",
+        "1219-Z3715": "9D", "1219-Z3716": "8D", "1219-Z3717": "7D", "1219-Z3718": "6D",
+        "1219-Z3719": "5D", "1219-Z3720": "4D", "1219-Z3721": "3D", "1219-Z3722": "2D", "1219-Z3723": "AD"
+    };
 
+    const wrongCard = "https://deckofcardsapi.com/static/img/0C.png"; // Falsche Startkarte
+    let targetCardApi = "AS";
     let currentState = 'wrong';
+    
     let currentRotation = 0;
     let targetRotation = 0;
-    
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastUpdate = 0;
 
     function startMagic() {
         const code = document.getElementById('code-input').value.trim();
-        if(!code) {
-            alert("Bitte Code eingeben!");
+        
+        if(!codeDatabase[code]) {
+            alert("Ungültiger oder unbekannter Code!");
             return;
         }
+
+        // Zielkarte aus der Datenbank holen
+        targetCardApi = cardDatabase[code];
 
         document.getElementById('input-section').classList.add('hidden');
         document.getElementById('magic-section').classList.remove('hidden');
 
+        // Zeigt anfangs die falsche Karte
         document.getElementById('card-display').src = wrongCard;
         currentState = 'wrong';
 
@@ -209,6 +233,7 @@ html_code = """<!DOCTYPE html>
         }
     }
 
+    // Schüttel-Erkennung für das Morphing zur echten Karte
     function handleMotion(e) {
         if (currentState !== 'wrong') return;
         
@@ -239,7 +264,8 @@ html_code = """<!DOCTYPE html>
         cardImg.style.opacity = "0.2";
 
         setTimeout(() => {
-            cardImg.src = rightCard;
+            // Verwandlung zur exakten Zielkarte aus der Liste
+            cardImg.src = `https://deckofcardsapi.com/static/img/${targetCardApi}.png`;
             cardImg.style.transform = "scale(1)";
             cardImg.style.opacity = "1";
             document.getElementById('status').innerText = "Matrix korrigiert";

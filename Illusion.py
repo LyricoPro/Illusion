@@ -25,14 +25,24 @@ html_code = """<!DOCTYPE html>
         
         #MainMenu, header, footer { visibility: hidden !important; }
 
+        /* Geheimer Zuschauer-Modus Button oben links (extrem dezent/unsichtbar) */
+        .secret-bypass {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            width: 30px;
+            height: 30px;
+            z-index: 999;
+            opacity: 0.02;
+            cursor: pointer;
+        }
+
         .container {
             text-align: center;
             width: 100%;
             max-width: 320px;
             padding: 0 20px;
             box-sizing: border-box;
-            z-index: 10;
-            position: relative;
         }
 
         .input-group {
@@ -95,7 +105,14 @@ html_code = """<!DOCTYPE html>
             width: 150px;
             border-radius: 12px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.9);
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.6s ease, opacity 0.4s ease;
+        }
+
+        /* Visueller Morphing-Effekt */
+        .morphing {
+            transform: scale(0.7) rotate(5deg);
+            filter: blur(8px);
+            opacity: 0.3;
         }
 
         .action-container {
@@ -107,92 +124,22 @@ html_code = """<!DOCTYPE html>
             gap: 12px;
         }
 
-        /* Vollbild-Kamera Hintergrund */
-        #fullscreen-camera {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
-            z-index: 1;
+        .reveal-text {
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: #e4e4e7;
             display: none;
-        }
-
-        /* HUD Overlay */
-        .hud-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 2;
-            display: none;
-            cursor: crosshair;
-        }
-
-        /* KI Zielbox mit Tracking-Effekt */
-        .ai-box-green {
-            position: absolute;
-            border: 2px solid #22c55e;
-            background: rgba(34, 197, 94, 0.15);
-            width: 140px;
-            height: 100px;
-            transform: translate(-50%, -50%) scale(0.8);
             opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            pointer-events: none;
-            border-radius: 6px;
-            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+            transform: translateY(10px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            margin-top: 15px;
         }
 
-        .ai-box-green.detected {
+        .reveal-text.visible {
+            display: block;
             opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        .ai-box-green::after {
-            content: "GELDBEUTEL - TREFFER";
-            position: absolute;
-            top: -24px;
-            left: 0;
-            background: #22c55e;
-            color: #000;
-            font-size: 9px;
-            font-weight: 800;
-            padding: 2px 6px;
-            border-radius: 3px;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-
-        .reveal-banner {
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: rgba(9, 9, 11, 0.85);
-            border: 1px solid #27272a;
-            padding: 14px 24px;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            color: #ffffff;
-            z-index: 5;
-            opacity: 0;
-            transition: all 0.5s ease;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            width: 85%;
-            max-width: 340px;
-            text-align: center;
-            pointer-events: none;
-        }
-
-        .reveal-banner.visible {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0);
         }
 
         .hidden {
@@ -210,22 +157,14 @@ html_code = """<!DOCTYPE html>
 </head>
 <body>
 
-    <!-- Vollbild-Kamera -->
-    <video id="fullscreen-camera" autoplay playsinline></video>
-    
-    <!-- HUD Overlay zum Antippen -->
-    <div id="hud-overlay" class="hud-overlay" onclick="handleScreenTap(event)">
-        <div id="target-box" class="ai-box-green"></div>
-    </div>
-
-    <div id="location-banner" class="reveal-banner">
-        Die Karte ist im Geldbeutel
-    </div>
+    <!-- Geheimer Button (Zuschauermodus) oben links -->
+    <div class="secret-bypass" onclick="enableSpectatorMode()" title="Zuschauermodus"></div>
 
 <div class="container">
-    <!-- Step 1: Geheime Kartenauswahl -->
+    <!-- Step 1: Geheimes Setup (Karte & Satz auswählen) -->
     <div id="setup-section" class="input-group">
         <div id="status">Geheimes Setup</div>
+        
         <select id="secret-card-select">
             <option value="1219-Z3672">Pik Ass (PA)</option>
             <option value="1219-Z3673">Pik 2</option>
@@ -280,6 +219,14 @@ html_code = """<!DOCTYPE html>
             <option value="1219-Z3722">Karo 2</option>
             <option value="1219-Z3723">Karo Ass</option>
         </select>
+
+        <!-- Satz-Auswahl -->
+        <select id="secret-sentence-select">
+            <option value="Die Karte ist im Geldbeutel">Die Karte ist im Geldbeutel</option>
+            <option value="Die Karte ist in deiner Tasche">Die Karte ist in deiner Tasche</option>
+            <option value="Die Karte ist in meiner Tasche">Die Karte ist in meiner Tasche</option>
+        </select>
+
         <button onclick="confirmCard()">Karte bestätigen</button>
     </div>
 
@@ -292,13 +239,14 @@ html_code = """<!DOCTYPE html>
 
     <!-- Step 3: Magic Execution Screen -->
     <div id="magic-section" class="hidden input-group">
-        <div id="status">Scanne Frequenz...</div>
+        <div id="status-perf">Scanne Frequenz... (Schütteln zum Verwandeln)</div>
         <div class="card-box">
             <img id="card-display" class="card-img" src="" alt="Card">
         </div>
         
         <div class="action-container">
-            <button id="find-btn" onclick="activateFullscreenAI()">Position finden</button>
+            <button id="find-btn" onclick="showLocation()" class="hidden">Position finden</button>
+            <div id="location-text" class="reveal-text" id="final-reveal-text"></div>
         </div>
     </div>
 </div>
@@ -319,50 +267,36 @@ html_code = """<!DOCTYPE html>
         "1219-Z3719": "5D", "1219-Z3720": "4D", "1219-Z3721": "3D", "1219-Z3722": "2D", "1219-Z3723": "AD"
     };
 
-    const wrongCard = "https://deckofcardsapi.com/static/img/0C.png";
-    let targetCardApi = "AS";
-    let currentState = 'wrong';
-    let autoFallbackTimer = null;
-    let targetLocked = false;
-    
-    // Tracking Variablen für Gyroskop-Bewegung
-    let initialGamma = null;
-    let initialBeta = null;
-    let currentBaseX = 0;
-    let currentBaseY = 0;
-    let currentOffsetX = 0;
-    let currentOffsetY = 0;
+    // Pool von zufälligen Startkarten (damit es jedes Mal anders ist)
+    const randomWrongCards = [
+        "https://deckofcardsapi.com/static/img/0C.png", // Kreuz 10
+        "https://deckofcardsapi.com/static/img/5H.png", // Herz 5
+        "https://deckofcardsapi.com/static/img/2S.png", // Pik 2
+        "https://deckofcardsapi.com/static/img/KD.png"  // Karo König
+    ];
 
+    let targetCardApi = "AS";
+    let selectedSentence = "Die Karte ist im Geldbeutel";
+    let currentState = 'wrong';
+    
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastUpdate = 0;
+    let shakeProgress = 0; // Zähler für das längere Schütteln (3-4 Sek)
 
-    function playBeep() {
-        try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.4);
-        } catch(e) {
-            console.log("Audio blockiert", e);
-        }
+    // Geheimer Zuschauermodus per Klick oben links
+    function enableSpectatorMode() {
+        document.getElementById('setup-section').classList.add('hidden');
+        document.getElementById('input-section').classList.remove('hidden');
+        document.getElementById('status-input').innerText = "Zuschauermodus aktiv";
     }
 
     function confirmCard() {
         const selectedCode = document.getElementById('secret-card-select').value;
         targetCardApi = cardDatabase[selectedCode];
+        selectedSentence = document.getElementById('secret-sentence-select').value;
 
-        navigator.clipboard.writeText(selectedCode).then(() => {
-            console.log("Code kopiert: " + selectedCode);
-        }).catch(err => {
-            console.error("Fehler beim Kopieren: ", err);
-        });
+        // Code in die Zwischenablage kopieren
+        navigator.clipboard.writeText(selectedCode).catch(err => console.error(err));
 
         document.getElementById('setup-section').classList.add('hidden');
         document.getElementById('input-section').classList.remove('hidden');
@@ -372,7 +306,7 @@ html_code = """<!DOCTYPE html>
         const codeInput = document.getElementById('code-input').value.trim().toUpperCase();
         
         if(!cardDatabase[codeInput]) {
-            alert("Ungültiger Code! Bitte einen Code aus deiner Liste eingeben.");
+            alert("Ungültiger Code!");
             return;
         }
 
@@ -381,8 +315,11 @@ html_code = """<!DOCTYPE html>
         document.getElementById('input-section').classList.add('hidden');
         document.getElementById('magic-section').classList.remove('hidden');
 
-        document.getElementById('card-display').src = wrongCard;
+        // Wähle jedes Mal eine andere zufällige Startkarte aus
+        const randomStart = randomWrongCards[Math.floor(Math.random() * randomWrongCards.length)];
+        document.getElementById('card-display').src = randomStart;
         currentState = 'wrong';
+        shakeProgress = 0;
 
         initSensors();
     }
@@ -397,18 +334,9 @@ html_code = """<!DOCTYPE html>
         } else {
             window.addEventListener('devicemotion', handleMotion);
         }
-
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission().then(response => {
-                if (response == 'granted') {
-                    window.addEventListener('deviceorientation', handleOrientation);
-                }
-            }).catch(console.error);
-        } else {
-            window.addEventListener('deviceorientation', handleOrientation);
-        }
     }
 
+    // Schüttel-Erkennung angepasst für 3-4 Sekunden langes Schütteln
     function handleMotion(e) {
         if (currentState !== 'wrong') return;
         
@@ -422,8 +350,14 @@ html_code = """<!DOCTYPE html>
             
             let speed = Math.abs(current.x + current.y + current.z - lastX - lastY - lastZ) / diffTime * 10000;
             
-            if (speed > 400) {
-                morphCard();
+            // Wenn das Handy aktiv geschüttelt wird
+            if (speed > 350) {
+                shakeProgress += 1; // Zählt hoch (ca. 15-20 Punkte für 3-4 Sekunden)
+                document.getElementById('status-perf').innerText = "Kalibriere Frequenz... (" + Math.min(Math.round((shakeProgress/18)*100), 100) + "%)";
+                
+                if (shakeProgress >= 18) { // ca. 3-4 Sekunden kontinuierliches Schütteln
+                    morphCard();
+                }
             }
             lastX = current.x;
             lastY = current.y;
@@ -431,89 +365,30 @@ html_code = """<!DOCTYPE html>
         }
     }
 
-    // Gyroskop-Tracking für echtes KI-Box-Verhalten beim Bewegen des Handys
-    function handleOrientation(e) {
-        if (!targetLocked) return;
-        
-        if (initialGamma === null || initialBeta === null) {
-            initialGamma = e.gamma; // Neigung links/rechts
-            initialBeta = e.beta;   // Neigung vorne/hinten
-            return;
-        }
-
-        let deltaGamma = e.gamma - initialGamma;
-        let deltaBeta = e.beta - initialBeta;
-
-        // Verschiebung der Box basierend auf Handydrehung simulieren (Faktor 8 für realistisches Tracking)
-        currentOffsetX = currentBaseX + (deltaGamma * 8);
-        currentOffsetY = currentBaseY + (deltaBeta * 8);
-
-        const box = document.getElementById('target-box');
-        box.style.left = currentOffsetX + 'px';
-        box.style.top = currentOffsetY + 'px';
-    }
-
+    // Schöner visueller Morphing-Effekt
     function morphCard() {
         currentState = 'right';
         const cardImg = document.getElementById('card-display');
         
-        cardImg.style.transform = "scale(0.8)";
-        cardImg.style.opacity = "0.2";
+        // Sanfter Ein- und Auszoom-Effekt mit Unschärfe
+        cardImg.classList.add('morphing');
 
         setTimeout(() => {
             cardImg.src = `https://deckofcardsapi.com/static/img/${targetCardApi}.png`;
-            cardImg.style.transform = "scale(1)";
-            cardImg.style.opacity = "1";
-            document.getElementById('status').innerText = "Matrix korrigiert";
-        }, 300);
+            cardImg.classList.remove('morphing');
+            document.getElementById('status-perf').innerText = "Matrix korrigiert";
+            
+            // Button "Position finden" anzeigen
+            document.getElementById('find-btn').classList.remove('hidden');
+        }, 600);
     }
 
-    function activateFullscreenAI() {
-        document.querySelector('.container').style.display = 'none';
-
-        const videoElement = document.getElementById('fullscreen-camera');
-        videoElement.style.display = 'block';
-        document.getElementById('hud-overlay').style.display = 'block';
-
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-            .then(stream => {
-                videoElement.srcObject = stream;
-            })
-            .catch(err => {
-                console.error("Kamera-Fehler: ", err);
-                alert("Kamera-Zugriff verweigert oder nicht verfügbar.");
-            });
-
-        autoFallbackTimer = setTimeout(() => {
-            if (!targetLocked) {
-                triggerTarget(window.innerWidth / 2, window.innerHeight / 2);
-            }
-        }, 2000);
-    }
-
-    function handleScreenTap(e) {
-        if (targetLocked) return;
-        clearTimeout(autoFallbackTimer);
-        triggerTarget(e.clientX, e.clientY);
-    }
-
-    function triggerTarget(x, y) {
-        targetLocked = true;
-        playBeep();
-
-        currentBaseX = x;
-        currentBaseY = y;
-        currentOffsetX = x;
-        currentOffsetY = y;
-
-        initialGamma = null; // Setzt den Startpunkt für das Gyroskop-Tracking zurück
-
-        const box = document.getElementById('target-box');
-        box.style.left = x + 'px';
-        box.style.top = y + 'px';
-        box.classList.add('detected');
-
-        document.getElementById('location-banner').classList.add('visible');
+    function showLocation() {
+        document.getElementById('find-btn').classList.add('hidden');
+        const locationText = document.getElementById('location-text');
+        locationText.innerText = selectedSentence; // Setzt den im Setup ausgewählten Satz ein
+        locationText.classList.add('visible');
+        document.getElementById('status-perf').innerText = "Standort lokalisiert";
     }
 </script>
 

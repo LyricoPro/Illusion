@@ -105,28 +105,26 @@ html_code = """<!DOCTYPE html>
             width: 150px;
             border-radius: 12px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.9);
-            transition: transform 0.4s ease-in-out, filter 0.4s ease-in-out, opacity 0.4s ease-in-out;
+            transition: filter 0.3s ease, opacity 0.3s ease;
         }
 
         /* Wackel-Effekt beim Schütteln */
         @keyframes shakeCard {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            20% { transform: translate(-3px, 3px) rotate(-2deg); }
-            40% { transform: translate(3px, -2px) rotate(2deg); }
-            60% { transform: translate(-2px, -3px) rotate(-1deg); }
-            80% { transform: translate(3px, 3px) rotate(2deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-4px, 2px); }
+            40% { transform: translate(4px, -3px); }
+            60% { transform: translate(-3px, -2px); }
+            80% { transform: translate(3px, 4px); }
+            100% { transform: translate(0, 0); }
         }
 
         .shaking {
-            animation: shakeCard 0.15s infinite ease-in-out;
+            animation: shakeCard 0.12s infinite ease-in-out;
         }
 
-        /* Echter Verwandlungs-Morphing-Effekt (Flip & Fade ohne Größenänderung) */
-        .morphing {
-            transform: perspective(600px) rotateY(90deg) scale(0.95);
-            filter: brightness(1.3);
-            opacity: 0.2;
+        /* Unauffälliges verschwommenes Überblenden während der Schüttelbewegung */
+        .morph-blur {
+            filter: blur(6px) opacity(0.4);
         }
 
         .action-container {
@@ -340,7 +338,7 @@ html_code = """<!DOCTYPE html>
         const randomStart = randomWrongCards[Math.floor(Math.random() * randomWrongCards.length)];
         const cardImg = document.getElementById('card-display');
         cardImg.src = randomStart;
-        cardImg.classList.remove('morphing');
+        cardImg.className = 'card-img';
         
         currentState = 'wrong';
         shakeProgress = 0;
@@ -378,10 +376,9 @@ html_code = """<!DOCTYPE html>
                 shakeProgress += 1;
                 cardImg.classList.add('shaking');
                 
-                // ca. 3-4 Sekunden kontinuierliches Schütteln
+                // Nach ca. 3-4 Sekunden lückenlos während des Schüttelns wechseln
                 if (shakeProgress >= 18) {
-                    cardImg.classList.remove('shaking');
-                    morphCard();
+                    morphInMotion();
                 }
             } else {
                 if(shakeProgress > 0) {
@@ -395,19 +392,24 @@ html_code = """<!DOCTYPE html>
         }
     }
 
-    function morphCard() {
+    // Unauffälliger Switch während der Wackelbewegung
+    function morphInMotion() {
         currentState = 'right';
         const cardImg = document.getElementById('card-display');
         
-        // Echter visueller Morphing-Effekt (Flip & Überblenden ohne Zoom)
-        cardImg.classList.add('morphing');
+        // Ganz kurzes Verschwimmen genau mitten in der Schüttelbewegung
+        cardImg.classList.add('morph-blur');
 
         setTimeout(() => {
             cardImg.src = `https://deckofcardsapi.com/static/img/${targetCardApi}.png`;
-            cardImg.classList.remove('morphing');
+            cardImg.classList.remove('morph-blur');
             
-            document.getElementById('find-btn').classList.remove('hidden');
-        }, 350);
+            // Nach kurzer Verzögerung das Schütteln beenden und Zielkarte sauber stehen lassen
+            setTimeout(() => {
+                cardImg.classList.remove('shaking');
+                document.getElementById('find-btn').classList.remove('hidden');
+            }, 300);
+        }, 200);
     }
 
     function showLocation() {

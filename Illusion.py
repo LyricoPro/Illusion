@@ -23,32 +23,39 @@ html_code = """<!DOCTYPE html>
             justify-content: center;
         }
         
-        #MainMenu, header, footer { visibility: hidden; }
+        #MainMenu, header, footer { visibility: hidden !important; }
 
         .container {
             text-align: center;
-            width: 85%;
-            max-width: 340px;
+            width: 100%;
+            max-width: 320px;
+            padding: 0 20px;
+            box-sizing: border-box;
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
+            align-items: center;
             gap: 12px;
+            width: 100%;
         }
 
-        input {
-            width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            border-radius: 10px;
-            border: 1px solid #27272a;
-            background: #09090b;
-            color: #ffffff;
-            text-align: center;
-            outline: none;
-            box-sizing: border-box;
-            letter-spacing: 1px;
+        /* Alle Eingabefelder und Buttons exakt gleich groß und symmetrisch */
+        input, button {
+            width: 100% !important;
+            height: 48px !important;
+            padding: 0 14px !important;
+            font-size: 16px !important;
+            border-radius: 10px !important;
+            border: 1px solid #27272a !important;
+            background: #09090b !important;
+            color: #ffffff !important;
+            text-align: center !important;
+            outline: none !important;
+            box-sizing: border-box !important;
+            letter-spacing: 1px !important;
+            -webkit-appearance: none;
         }
 
         input::placeholder {
@@ -56,23 +63,18 @@ html_code = """<!DOCTYPE html>
         }
 
         button {
-            width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            background: #18181b;
-            color: white;
-            border: 1px solid #3f3f46;
-            border-radius: 10px;
+            background: #18181b !important;
+            border: 1px solid #3f3f46 !important;
             cursor: pointer;
             font-weight: 500;
         }
 
         button:active {
-            background: #27272a;
+            background: #27272a !important;
         }
 
         .card-box {
-            margin-top: 20px;
+            margin-top: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -80,14 +82,14 @@ html_code = """<!DOCTYPE html>
         }
 
         .card-img {
-            width: 160px;
+            width: 150px;
             border-radius: 12px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.9);
             transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
         }
 
         .code-display {
-            margin-top: 15px;
+            margin-top: 12px;
             font-family: monospace;
             font-size: 16px;
             letter-spacing: 2px;
@@ -95,8 +97,8 @@ html_code = """<!DOCTYPE html>
         }
 
         .arrow-container {
-            margin-top: 20px;
-            height: 60px;
+            margin-top: 15px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -109,8 +111,8 @@ html_code = """<!DOCTYPE html>
         }
 
         svg {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             filter: drop-shadow(0 2px 8px rgba(56, 189, 248, 0.4));
         }
 
@@ -119,9 +121,9 @@ html_code = """<!DOCTYPE html>
         }
 
         #status {
-            font-size: 12px;
+            font-size: 11px;
             color: #71717a;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 1.5px;
         }
@@ -130,19 +132,24 @@ html_code = """<!DOCTYPE html>
 <body>
 
 <div class="container">
+    <!-- Eingabebereiche -->
     <div id="input-section" class="input-group">
-        <input type="number" id="pos-input" placeholder="Position im Deck (z.B. 14)">
+        <input type="number" id="pos-input" placeholder="Position im Deck">
         <input type="date" id="date-input">
         <button onclick="startMagic()">Matrix berechnen</button>
     </div>
 
-    <div id="magic-section" class="hidden">
-        <div id="status">Berechne Quanten-Resonanz...</div>
+    <!-- Magie & Ausgabe -->
+    <div id="magic-section" class="hidden input-group">
+        <div id="status">Stargazer Frequenz aktiv</div>
         <div class="card-box">
             <img id="card-display" class="card-img" src="" alt="Card">
             <div id="code-text" class="code-display"></div>
         </div>
         
+        <!-- Der neue Umformungs-Knopf -->
+        <button id="morph-btn" onclick="triggerMorph()">Matrix umformieren</button>
+
         <div id="arrow-box" class="arrow-container">
             <svg id="vector-arrow" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -153,22 +160,23 @@ html_code = """<!DOCTYPE html>
 </div>
 
 <script>
-    const cardStargazer = "https://deckofcardsapi.com/static/img/AS.png"; 
-    const cardArchangels = "https://deckofcardsapi.com/static/img/AS.png"; 
+    // Hochauflösende Visualisierungen der echten Karten
+    const cardStargazer = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400"; // Platzhalter / Echte Stargazer Optik
+    const cardArchangels = "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=400"; // Platzhalter / Echte Archangels Optik
+    
+    // Fallback zu Standard-Karten falls gewünscht, wir nutzen hier die aus den Referenzen bekannten optischen Verhältnisse:
+    const realStargazer = "https://deckofcardsapi.com/static/img/AS.png"; 
+    const realArchangels = "https://deckofcardsapi.com/static/img/AS.png";
+
     const wrongCards = [
         "https://deckofcardsapi.com/static/img/0C.png",
         "https://deckofcardsapi.com/static/img/KH.png",
         "https://deckofcardsapi.com/static/img/JD.png"
     ];
 
-    let currentState = 'ready';
-    let isAllowedToMorph = true;
-    
+    let isMorphAllowed = true;
     let currentRotation = 0;
     let targetRotation = 0;
-    
-    let lastX = 0, lastY = 0, lastZ = 0;
-    let lastUpdate = 0;
 
     function startMagic() {
         const posVal = parseInt(document.getElementById('pos-input').value);
@@ -182,38 +190,51 @@ html_code = """<!DOCTYPE html>
         document.getElementById('input-section').classList.add('hidden');
         document.getElementById('magic-section').classList.remove('hidden');
 
-        // Logik für Position über 35: Falsche Karte, kein Morphing erlaubt
+        // Wenn Position > 35: Falsche Karte, kein Umformen möglich
         if (posVal > 35) {
-            isAllowedToMorph = false;
-            currentState = 'wrong';
+            isMorphAllowed = false;
             let randomWrong = wrongCards[Math.floor(Math.random() * wrongCards.length)];
             document.getElementById('card-display').src = randomWrong;
             document.getElementById('code-text').innerText = "ERR-" + posVal;
-            document.getElementById('status').innerText = "Keine Resonanz gefunden";
+            document.getElementById('status').innerText = "Keine Resonanz";
+            document.getElementById('morph-btn').style.display = 'none';
             return;
         }
 
-        // Normale magische Bedingung (Position <= 35): Generiert automatisch den Stargazer Code[cite: 1]
-        isAllowedToMorph = true;
-        currentState = 'stargazer';
-        document.getElementById('card-display').src = cardStargazer;
-        document.getElementById('code-text').innerText = "1219-Z3672";[cite: 1]
-        document.getElementById('status').innerText = "Stargazer Frequenz aktiv";
-
+        // Gültiger Bereich (<= 35): Zeigt Stargazer und Code 1219-Z3672
+        isMorphAllowed = true;
+        document.getElementById('card-display').src = realStargazer;
+        document.getElementById('code-text').innerText = "1219-Z3672";
+        document.getElementById('status').innerText = "Stargazer Deck";
+        
         initSensors();
     }
 
-    function initSensors() {
-        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            DeviceMotionEvent.requestPermission().then(response => {
-                if (response == 'granted') {
-                    window.addEventListener('devicemotion', handleMotion);
-                }
-            }).catch(console.error);
-        } else {
-            window.addEventListener('devicemotion', handleMotion);
-        }
+    function triggerMorph() {
+        if (!isMorphAllowed) return;
 
+        const cardImg = document.getElementById('card-display');
+        const codeText = document.getElementById('code-text');
+        
+        cardImg.style.transform = "scale(0.8)";
+        cardImg.style.opacity = "0.2";
+
+        setTimeout(() => {
+            // Verwandlung in Archangels Code und Karte
+            codeText.innerText = "0423-D3396";
+            document.getElementById('status').innerText = "Archangels Deck";
+            cardImg.src = realArchangels;
+            
+            cardImg.style.transform = "scale(1)";
+            cardImg.style.opacity = "1";
+            
+            // Verstecke den Knopf nach der Verwandlung und zeige den Pfeil
+            document.getElementById('morph-btn').style.display = 'none';
+            document.getElementById('arrow-box').classList.add('visible');
+        }, 300);
+    }
+
+    function initSensors() {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission().then(response => {
                 if (response == 'granted') {
@@ -225,51 +246,8 @@ html_code = """<!DOCTYPE html>
         }
     }
 
-    function handleMotion(e) {
-        if (!isAllowedToMorph) return; // Wenn Position > 35, passiert beim Schütteln absolut nichts!
-        
-        let current = e.accelerationIncludingGravity;
-        if (!current) return;
-        
-        let currentTime = new Date().getTime();
-        if ((currentTime - lastUpdate) > 100) {
-            let diffTime = currentTime - lastUpdate;
-            lastUpdate = currentTime;
-            
-            let speed = Math.abs(current.x + current.y + current.z - lastX - lastY - lastZ) / diffTime * 10000;
-            
-            if (speed > 450 && currentState === 'stargazer') {
-                triggerMorph();
-            }
-            lastX = current.x;
-            lastY = current.y;
-            lastZ = current.z;
-        }
-    }
-
-    function triggerMorph() {
-        currentState = 'archangels';
-        const cardImg = document.getElementById('card-display');
-        const codeText = document.getElementById('code-text');
-        
-        cardImg.style.transform = "scale(0.8)";
-        cardImg.style.opacity = "0.2";
-
-        setTimeout(() => {
-            codeText.innerText = "0423-D3396";[cite: 2]
-            document.getElementById('status').innerText = "Matrix synchronisiert";
-            
-            cardImg.src = cardArchangels;[cite: 2]
-            cardImg.style.transform = "scale(1)";
-            cardImg.style.opacity = "1";
-            
-            document.getElementById('arrow-box').classList.add('visible');
-        }, 300);
-    }
-
+    // Tisch-Rotation: Reagiert aufs Drehen und federt sanft zurück
     function handleOrientation(e) {
-        if (currentState !== 'archangels') return;
-        
         let alpha = e.alpha; 
         if (alpha !== null) {
             targetRotation = (alpha % 360) * 0.5;
@@ -279,8 +257,8 @@ html_code = """<!DOCTYPE html>
     function animatePhysics() {
         const arrow = document.getElementById('vector-arrow');
         if (arrow) {
-            if (currentState === 'archangels' && Math.abs(targetRotation - currentRotation) < 0.1) {
-                targetRotation *= 0.95;
+            if (Math.abs(targetRotation - currentRotation) < 0.1) {
+                targetRotation *= 0.93; // Federt zurück zur Ausgangsposition beim Anhalten
             }
             
             currentRotation += (targetRotation - currentRotation) * 0.08;
@@ -292,6 +270,7 @@ html_code = """<!DOCTYPE html>
 </script>
 
 </body>
-</html>"""
+</html>
+"""
 
 st.components.v1.html(html_code, height=750, scrolling=False)

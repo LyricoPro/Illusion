@@ -119,7 +119,7 @@ html_code = """<!DOCTYPE html>
             display: none;
         }
 
-        /* HUD Overlay für KI-Scanning */
+        /* HUD Overlay */
         .hud-overlay {
             position: fixed;
             top: 0;
@@ -127,55 +127,43 @@ html_code = """<!DOCTYPE html>
             width: 100vw;
             height: 100vh;
             z-index: 2;
-            pointer-events: none;
             display: none;
+            cursor: crosshair;
         }
 
-        /* Gefälschte rote Erkennungsboxen */
-        .ai-box-red {
-            position: absolute;
-            border: 2px dashed rgba(239, 68, 68, 0.8);
-            background: rgba(239, 68, 68, 0.05);
-            animation: pulseRed 1.5s infinite;
-        }
-
-        /* Grüne Zielbox für den Geldbeutel */
+        /* KI Zielbox mit Tracking-Effekt */
         .ai-box-green {
             position: absolute;
             border: 2px solid #22c55e;
             background: rgba(34, 197, 94, 0.15);
-            top: 35%;
-            left: 20%;
-            width: 60%;
-            height: 35%;
+            width: 140px;
+            height: 100px;
+            transform: translate(-50%, -50%) scale(0.8);
             opacity: 0;
-            transform: scale(1.1);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            border-radius: 6px;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
         }
 
         .ai-box-green.detected {
             opacity: 1;
-            transform: scale(1);
+            transform: translate(-50%, -50%) scale(1);
         }
 
         .ai-box-green::after {
-            content: "GELDBEUTEL - TREFFER (99.8%)";
+            content: "GELDBEUTEL - TREFFER";
             position: absolute;
             top: -24px;
             left: 0;
             background: #22c55e;
             color: #000;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 800;
             padding: 2px 6px;
-            border-radius: 4px;
-            letter-spacing: 1px;
-        }
-
-        @keyframes pulseRed {
-            0% { opacity: 0.4; }
-            50% { opacity: 0.9; }
-            100% { opacity: 0.4; }
+            border-radius: 3px;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         .reveal-banner {
@@ -199,6 +187,7 @@ html_code = """<!DOCTYPE html>
             width: 85%;
             max-width: 340px;
             text-align: center;
+            pointer-events: none;
         }
 
         .reveal-banner.visible {
@@ -221,15 +210,11 @@ html_code = """<!DOCTYPE html>
 </head>
 <body>
 
-    <!-- Vollbild-Kamera und HUD (werden nach Klick aktiviert) -->
+    <!-- Vollbild-Kamera -->
     <video id="fullscreen-camera" autoplay playsinline></video>
     
-    <div id="hud-overlay" class="hud-overlay">
-        <!-- Nebensächliche rote KI-Boxen -->
-        <div class="ai-box-red" style="top: 15%; left: 10%; width: 25%; height: 20%;"></div>
-        <div class="ai-box-red" style="bottom: 12%; right: 15%; width: 30%; height: 25%;"></div>
-        
-        <!-- Haupt-Zielbox für den Geldbeutel -->
+    <!-- HUD Overlay zum Antippen -->
+    <div id="hud-overlay" class="hud-overlay" onclick="handleScreenTap(event)">
         <div id="target-box" class="ai-box-green"></div>
     </div>
 
@@ -337,7 +322,17 @@ html_code = """<!DOCTYPE html>
     const wrongCard = "https://deckofcardsapi.com/static/img/0C.png";
     let targetCardApi = "AS";
     let currentState = 'wrong';
+    let autoFallbackTimer = null;
+    let targetLocked = false;
     
+    // Tracking Variablen für Gyroskop-Bewegung
+    let initialGamma = null;
+    let initialBeta = null;
+    let currentBaseX = 0;
+    let currentBaseY = 0;
+    let currentOffsetX = 0;
+    let currentOffsetY = 0;
+
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastUpdate = 0;
 
@@ -347,15 +342,15 @@ html_code = """<!DOCTYPE html>
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Hoher Ton (A5)
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
+            osc.stop(audioCtx.currentTime + 0.4);
         } catch(e) {
-            console.log("Audio Kontext blockiert", e);
+            console.log("Audio blockiert", e);
         }
     }
 
@@ -402,6 +397,16 @@ html_code = """<!DOCTYPE html>
         } else {
             window.addEventListener('devicemotion', handleMotion);
         }
+
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission().then(response => {
+                if (response == 'granted') {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                }
+            }).catch(console.error);
+        } else {
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
     }
 
     function handleMotion(e) {
@@ -426,6 +431,28 @@ html_code = """<!DOCTYPE html>
         }
     }
 
+    // Gyroskop-Tracking für echtes KI-Box-Verhalten beim Bewegen des Handys
+    function handleOrientation(e) {
+        if (!targetLocked) return;
+        
+        if (initialGamma === null || initialBeta === null) {
+            initialGamma = e.gamma; // Neigung links/rechts
+            initialBeta = e.beta;   // Neigung vorne/hinten
+            return;
+        }
+
+        let deltaGamma = e.gamma - initialGamma;
+        let deltaBeta = e.beta - initialBeta;
+
+        // Verschiebung der Box basierend auf Handydrehung simulieren (Faktor 8 für realistisches Tracking)
+        currentOffsetX = currentBaseX + (deltaGamma * 8);
+        currentOffsetY = currentBaseY + (deltaBeta * 8);
+
+        const box = document.getElementById('target-box');
+        box.style.left = currentOffsetX + 'px';
+        box.style.top = currentOffsetY + 'px';
+    }
+
     function morphCard() {
         currentState = 'right';
         const cardImg = document.getElementById('card-display');
@@ -441,16 +468,13 @@ html_code = """<!DOCTYPE html>
         }, 300);
     }
 
-    // Vollbild-Kamera starten und KI-Interface aktivieren
     function activateFullscreenAI() {
-        // UI Elemente der App ausblenden, damit nur Kamera + HUD sichtbar sind
         document.querySelector('.container').style.display = 'none';
 
         const videoElement = document.getElementById('fullscreen-camera');
         videoElement.style.display = 'block';
         document.getElementById('hud-overlay').style.display = 'block';
 
-        // Kamera-Stream anfordern
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
             .then(stream => {
                 videoElement.srcObject = stream;
@@ -460,12 +484,36 @@ html_code = """<!DOCTYPE html>
                 alert("Kamera-Zugriff verweigert oder nicht verfügbar.");
             });
 
-        // Nach kurzer Scan-Zeit (1.2 Sek) rastet die grüne Box ein, piept und zeigt den Text
-        setTimeout(() => {
-            playBeep();
-            document.getElementById('target-box').classList.add('detected');
-            document.getElementById('location-banner').classList.add('visible');
-        }, 1200);
+        autoFallbackTimer = setTimeout(() => {
+            if (!targetLocked) {
+                triggerTarget(window.innerWidth / 2, window.innerHeight / 2);
+            }
+        }, 2000);
+    }
+
+    function handleScreenTap(e) {
+        if (targetLocked) return;
+        clearTimeout(autoFallbackTimer);
+        triggerTarget(e.clientX, e.clientY);
+    }
+
+    function triggerTarget(x, y) {
+        targetLocked = true;
+        playBeep();
+
+        currentBaseX = x;
+        currentBaseY = y;
+        currentOffsetX = x;
+        currentOffsetY = y;
+
+        initialGamma = null; // Setzt den Startpunkt für das Gyroskop-Tracking zurück
+
+        const box = document.getElementById('target-box');
+        box.style.left = x + 'px';
+        box.style.top = y + 'px';
+        box.classList.add('detected');
+
+        document.getElementById('location-banner').classList.add('visible');
     }
 </script>
 

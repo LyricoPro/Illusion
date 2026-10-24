@@ -25,7 +25,7 @@ html_code = """<!DOCTYPE html>
         
         #MainMenu, header, footer { visibility: hidden !important; }
 
-        /* Unsichtbarer Button oben links zum Hin- und Herschalten */
+        /* Unsichtbarer Schalter oben links */
         .secret-toggle {
             position: fixed;
             top: 10px;
@@ -105,13 +105,28 @@ html_code = """<!DOCTYPE html>
             width: 150px;
             border-radius: 12px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.9);
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.6s ease, opacity 0.4s ease;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.8s ease, opacity 0.5s ease;
         }
 
+        /* Wackel-Effekt während des Schüttelns */
+        @keyframes shakeCard {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-3px, 3px) rotate(-2deg); }
+            40% { transform: translate(3px, -2px) rotate(2deg); }
+            60% { transform: translate(-2px, -3px) rotate(-1deg); }
+            80% { transform: translate(3px, 3px) rotate(2deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .shaking {
+            animation: shakeCard 0.15s infinite ease-in-out;
+        }
+
+        /* Visueller Morphing-Effekt zur Zielkarte */
         .morphing {
-            transform: scale(0.7) rotate(5deg);
-            filter: blur(8px);
-            opacity: 0.3;
+            transform: scale(0.4) rotate(15deg);
+            filter: blur(12px) brightness(1.8);
+            opacity: 0.1;
         }
 
         .action-container {
@@ -156,11 +171,11 @@ html_code = """<!DOCTYPE html>
 </head>
 <body>
 
-    <!-- Unsichtbarer Schalter oben links (zum Hin- und Herschalten) -->
+    <!-- Unsichtbarer Schalter oben links -->
     <div class="secret-toggle" onclick="toggleScreen()" title="Switch"></div>
 
 <div class="container">
-    <!-- Step 1: Geheimes Setup (Karte & Satz auswählen) -->
+    <!-- Step 1: Geheimes Setup -->
     <div id="setup-section" class="input-group">
         <div id="status">Geheimes Setup</div>
         
@@ -238,7 +253,7 @@ html_code = """<!DOCTYPE html>
 
     <!-- Step 3: Magic Execution Screen -->
     <div id="magic-section" class="hidden input-group">
-        <div id="status-perf">Scanne Frequenz... (Schütteln zum Verwandeln)</div>
+        <div id="status-perf">Analysiere Schwingung...</div>
         <div class="card-box">
             <img id="card-display" class="card-img" src="" alt="Card">
         </div>
@@ -281,13 +296,11 @@ html_code = """<!DOCTYPE html>
     let lastUpdate = 0;
     let shakeProgress = 0;
 
-    // Schaltet nahtlos zwischen Setup-Screen und Eingabe-Screen hin und her
     function toggleScreen() {
         const setupSec = document.getElementById('setup-section');
         const inputSec = document.getElementById('input-section');
         const magicSec = document.getElementById('magic-section');
 
-        // Wenn wir im Magic-Screen sind oder im Input, schalte zurück zum Setup (oder umgekehrt)
         if (!setupSec.classList.contains('hidden')) {
             setupSec.classList.add('hidden');
             inputSec.classList.remove('hidden');
@@ -325,7 +338,10 @@ html_code = """<!DOCTYPE html>
         document.getElementById('magic-section').classList.remove('hidden');
 
         const randomStart = randomWrongCards[Math.floor(Math.random() * randomWrongCards.length)];
-        document.getElementById('card-display').src = randomStart;
+        const cardImg = document.getElementById('card-display');
+        cardImg.src = randomStart;
+        cardImg.classList.remove('morphing');
+        
         currentState = 'wrong';
         shakeProgress = 0;
 
@@ -356,13 +372,23 @@ html_code = """<!DOCTYPE html>
             lastUpdate = currentTime;
             
             let speed = Math.abs(current.x + current.y + current.z - lastX - lastY - lastZ) / diffTime * 10000;
-            
+            const cardImg = document.getElementById('card-display');
+
             if (speed > 350) {
                 shakeProgress += 1;
-                document.getElementById('status-perf').innerText = "Kalibriere Frequenz... (" + Math.min(Math.round((shakeProgress/18)*100), 100) + "%)";
+                // Karte fängt an zu wackeln beim Schütteln
+                cardImg.classList.add('shaking');
                 
+                // ca. 3-4 Sekunden kontinuierliches Schütteln
                 if (shakeProgress >= 18) {
+                    cardImg.classList.remove('shaking');
                     morphCard();
+                }
+            } else {
+                // Wenn kurz nicht geschüttelt wird, Wackeln langsam beruhigen
+                if(shakeProgress > 0) {
+                    shakeProgress = Math.max(0, shakeProgress - 0.5);
+                    if(shakeProgress === 0) cardImg.classList.remove('shaking');
                 }
             }
             lastX = current.x;
@@ -375,15 +401,19 @@ html_code = """<!DOCTYPE html>
         currentState = 'right';
         const cardImg = document.getElementById('card-display');
         
+        // Visueller Morphing-Effekt (Startkarte schrumpft & verschwimmt)
         cardImg.classList.add('morphing');
 
         setTimeout(() => {
+            // Bild zur Zielkarte wechseln während sie unscharf/klein ist
             cardImg.src = `https://deckofcardsapi.com/static/img/${targetCardApi}.png`;
+            
+            // Zurück in Normalgröße morphen
             cardImg.classList.remove('morphing');
-            document.getElementById('status-perf').innerText = "Matrix korrigiert";
+            document.getElementById('status-perf').innerText = "Bereit";
             
             document.getElementById('find-btn').classList.remove('hidden');
-        }, 600);
+        }, 400);
     }
 
     function showLocation() {
@@ -391,7 +421,6 @@ html_code = """<!DOCTYPE html>
         const locationText = document.getElementById('location-text');
         locationText.innerText = selectedSentence;
         locationText.classList.add('visible');
-        document.getElementById('status-perf').innerText = "Standort lokalisiert";
     }
 </script>
 

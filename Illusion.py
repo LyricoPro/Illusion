@@ -161,7 +161,7 @@ html_code = """<!DOCTYPE html>
 </div>
 
 <script>
-    // Vollständige Code-Datenbank für alle 52 Karten (API Kürzel: AS, 2S-KS, AH-KH, KC-AC, KD-AD)
+    // Vollständige Code-Datenbank für alle 52 Karten (Codes 1219-Z3672 bis 1219-Z3723)
     const cardDatabase = {
         // Pik (Spades)
         "1219-Z3672": "AS", "1219-Z3673": "2S", "1219-Z3674": "3S", "1219-Z3675": "4S",
@@ -181,7 +181,7 @@ html_code = """<!DOCTYPE html>
         "1219-Z3719": "5D", "1219-Z3720": "4D", "1219-Z3721": "3D", "1219-Z3722": "2D", "1219-Z3723": "AD"
     };
 
-    const wrongCard = "https://deckofcardsapi.com/static/img/0C.png"; // Falsche Startkarte
+    const wrongCard = "https://deckofcardsapi.com/static/img/0C.png"; // Falsche Startkarte (Kreuz 10)
     let targetCardApi = "AS";
     let currentState = 'wrong';
     
@@ -191,20 +191,20 @@ html_code = """<!DOCTYPE html>
     let lastUpdate = 0;
 
     function startMagic() {
-        const code = document.getElementById('code-input').value.trim();
+        const codeInput = document.getElementById('code-input').value.trim().toUpperCase();
         
-        if(!codeDatabase[code]) {
-            alert("Ungültiger oder unbekannter Code!");
+        if(!cardDatabase[codeInput]) {
+            alert("Ungültiger Code! Bitte einen Code aus deiner Liste eingeben.");
             return;
         }
 
-        // Zielkarte aus der Datenbank holen
-        targetCardApi = cardDatabase[code];
+        // Zielkarte exakt aus der Datenbank laden
+        targetCardApi = cardDatabase[codeInput];
 
         document.getElementById('input-section').classList.add('hidden');
         document.getElementById('magic-section').classList.remove('hidden');
 
-        // Zeigt anfangs die falsche Karte
+        // Erst die falsche Karte anzeigen
         document.getElementById('card-display').src = wrongCard;
         currentState = 'wrong';
 
@@ -233,7 +233,7 @@ html_code = """<!DOCTYPE html>
         }
     }
 
-    // Schüttel-Erkennung für das Morphing zur echten Karte
+    // Schütteln löst die Kartenverwandlung aus
     function handleMotion(e) {
         if (currentState !== 'wrong') return;
         
@@ -247,7 +247,7 @@ html_code = """<!DOCTYPE html>
             
             let speed = Math.abs(current.x + current.y + current.z - lastX - lastY - lastZ) / diffTime * 10000;
             
-            if (speed > 500) {
+            if (speed > 400) {
                 morphCard();
             }
             lastX = current.x;
@@ -264,7 +264,7 @@ html_code = """<!DOCTYPE html>
         cardImg.style.opacity = "0.2";
 
         setTimeout(() => {
-            // Verwandlung zur exakten Zielkarte aus der Liste
+            // Zeigt exakt die Karte zum eingegebenen Code (z.B. Pik Bube bei 1219-Z3682)
             cardImg.src = `https://deckofcardsapi.com/static/img/${targetCardApi}.png`;
             cardImg.style.transform = "scale(1)";
             cardImg.style.opacity = "1";

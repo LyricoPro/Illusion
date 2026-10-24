@@ -138,66 +138,66 @@ html_code = """<!DOCTYPE html>
 <body>
 
 <div class="container">
-    <!-- Step 1: Geheime Kartenauswahl mit Bestätigungs-Button -->
+    <!-- Step 1: Geheime Kartenauswahl mit automatischem Kopieren in die Zwischenablage -->
     <div id="setup-section" class="input-group">
         <div id="status">Geheimes Setup</div>
         <select id="secret-card-select">
             <!-- Pik -->
-            <option value="AS">Pik Ass (PA)</option>
-            <option value="2S">Pik 2</option>
-            <option value="3S">Pik 3</option>
-            <option value="4S">Pik 4</option>
-            <option value="5S">Pik 5</option>
-            <option value="6S">Pik 6</option>
-            <option value="7S">Pik 7</option>
-            <option value="8S">Pik 8</option>
-            <option value="9S">Pik 9</option>
-            <option value="0S">Pik 10</option>
-            <option value="JS">Pik Bube (PB)</option>
-            <option value="QS">Pik Dame (PD)</option>
-            <option value="KS">Pik König (PK)</option>
+            <option value="1219-Z3672">Pik Ass (PA)</option>
+            <option value="1219-Z3673">Pik 2</option>
+            <option value="1219-Z3674">Pik 3</option>
+            <option value="1219-Z3675">Pik 4</option>
+            <option value="1219-Z3676">Pik 5</option>
+            <option value="1219-Z3677">Pik 6</option>
+            <option value="1219-Z3678">Pik 7</option>
+            <option value="1219-Z3679">Pik 8</option>
+            <option value="1219-Z3680">Pik 9</option>
+            <option value="1219-Z3681">Pik 10</option>
+            <option value="1219-Z3682">Pik Bube (PB)</option>
+            <option value="1219-Z3683">Pik Dame (PD)</option>
+            <option value="1219-Z3684">Pik König (PK)</option>
             <!-- Herz -->
-            <option value="AH">Herz Ass (HA)</option>
-            <option value="2H">Herz 2</option>
-            <option value="3H">Herz 3</option>
-            <option value="4H">Herz 4</option>
-            <option value="5H">Herz 5</option>
-            <option value="6H">Herz 6</option>
-            <option value="7H">Herz 7</option>
-            <option value="8H">Herz 8</option>
-            <option value="9H">Herz 9</option>
-            <option value="0H">Herz 10</option>
-            <option value="JH">Herz Bube (HB)</option>
-            <option value="QH">Herz Dame (HD)</option>
-            <option value="KH">Herz König (HK)</option>
+            <option value="1219-Z3685">Herz Ass (HA)</option>
+            <option value="1219-Z3686">Herz 2</option>
+            <option value="1219-Z3687">Herz 3</option>
+            <option value="1219-Z3688">Herz 4</option>
+            <option value="1219-Z3689">Herz 5</option>
+            <option value="1219-Z3690">Herz 6</option>
+            <option value="1219-Z3691">Herz 7</option>
+            <option value="1219-Z3692">Herz 8</option>
+            <option value="1219-Z3693">Herz 9</option>
+            <option value="1219-Z3694">Herz 10</option>
+            <option value="1219-Z3695">Herz Bube (HB)</option>
+            <option value="1219-Z3696">Herz Dame (HD)</option>
+            <option value="1219-Z3697">Herz König (HK)</option>
             <!-- Kreuz -->
-            <option value="KC">Kreuz König (KK)</option>
-            <option value="QC">Kreuz Dame (KD)</option>
-            <option value="JC">Kreuz Bube (KB)</option>
-            <option value="0C">Kreuz 10</option>
-            <option value="9C">Kreuz 9</option>
-            <option value="8C">Kreuz 8</option>
-            <option value="7C">Kreuz 7</option>
-            <option value="6C">Kreuz 6</option>
-            <option value="5C">Kreuz 5</option>
-            <option value="4C">Kreuz 4</option>
-            <option value="3C">Kreuz 3</option>
-            <option value="2C">Kreuz 2</option>
-            <option value="AC">Kreuz Ass (KA)</option>
+            <option value="1219-Z3698">Kreuz König (KK)</option>
+            <option value="1219-Z3699">Kreuz Dame (KD)</option>
+            <option value="1219-Z3700">Kreuz Bube (KB)</option>
+            <option value="1219-Z3701">Kreuz 10</option>
+            <option value="1219-Z3702">Kreuz 9</option>
+            <option value="1219-Z3703">Kreuz 8</option>
+            <option value="1219-Z3704">Kreuz 7</option>
+            <option value="1219-Z3705">Kreuz 6</option>
+            <option value="1219-Z3706">Kreuz 5</option>
+            <option value="1219-Z3707">Kreuz 4</option>
+            <option value="1219-Z3708">Kreuz 3</option>
+            <option value="1219-Z3709">Kreuz 2</option>
+            <option value="1219-Z3710">Kreuz Ass (KA)</option>
             <!-- Karo -->
-            <option value="KD">Karo König</option>
-            <option value="QD">Karo Dame</option>
-            <option value="JD">Karo Bube</option>
-            <option value="0D">Karo 10</option>
-            <option value="9D">Karo 9</option>
-            <option value="8D">Karo 8</option>
-            <option value="7D">Karo 7</option>
-            <option value="6D">Karo 6</option>
-            <option value="5D">Karo 5</option>
-            <option value="4D">Karo 4</option>
-            <option value="3D">Karo 3</option>
-            <option value="2D">Karo 2</option>
-            <option value="AD">Karo Ass</option>
+            <option value="1219-Z3711">Karo König</option>
+            <option value="1219-Z3712">Karo Dame</option>
+            <option value="1219-Z3713">Karo Bube</option>
+            <option value="1219-Z3714">Karo 10</option>
+            <option value="1219-Z3715">Karo 9</option>
+            <option value="1219-Z3716">Karo 8</option>
+            <option value="1219-Z3717">Karo 7</option>
+            <option value="1219-Z3718">Karo 6</option>
+            <option value="1219-Z3719">Karo 5</option>
+            <option value="1219-Z3720">Karo 4</option>
+            <option value="1219-Z3721">Karo 3</option>
+            <option value="1219-Z3722">Karo 2</option>
+            <option value="1219-Z3723">Karo Ass</option>
         </select>
         <button onclick="confirmCard()">Karte bestätigen</button>
     </div>
@@ -248,9 +248,18 @@ html_code = """<!DOCTYPE html>
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastUpdate = 0;
 
-    // Schritt 1: Karte bestätigen und zur Code-Eingabe wechseln
+    // Schritt 1: Karte bestätigen, Code in Zwischenablage kopieren und zur Eingabe wechseln
     function confirmCard() {
-        targetCardApi = document.getElementById('secret-card-select').value;
+        const selectedCode = document.getElementById('secret-card-select').value;
+        targetCardApi = cardDatabase[selectedCode];
+
+        // Code in die Zwischenablage kopieren
+        navigator.clipboard.writeText(selectedCode).then(() => {
+            console.log("Code kopiert: " + selectedCode);
+        }).catch(err => {
+            console.error("Fehler beim Kopieren: ", err);
+        });
+
         document.getElementById('setup-section').classList.add('hidden');
         document.getElementById('input-section').classList.remove('hidden');
     }
@@ -264,7 +273,6 @@ html_code = """<!DOCTYPE html>
             return;
         }
 
-        // Optional: Abgleich, ob der eingegebene Code zur gewählten Karte passt (oder direkt übernehmen)
         targetCardApi = cardDatabase[codeInput];
 
         document.getElementById('input-section').classList.add('hidden');

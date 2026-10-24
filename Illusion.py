@@ -105,21 +105,82 @@ html_code = """<!DOCTYPE html>
             gap: 12px;
         }
 
+        /* Kamera- und KI-Boxen Layout */
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 280px;
+            height: 200px;
+            margin-top: 10px;
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+            background: #111;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        #video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* KI Bounding Boxes */
+        .ai-box {
+            position: absolute;
+            border: 2px solid red;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .ai-box.target {
+            border: 2px solid #22c55e;
+            top: 30%;
+            left: 25%;
+            width: 50%;
+            height: 40%;
+        }
+
+        .ai-box.target::after {
+            content: "Objekt gefunden";
+            position: absolute;
+            top: -18px;
+            left: 0;
+            background: #22c55e;
+            color: black;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+
+        .ai-box.dist-1 {
+            border: 2px solid red;
+            top: 10%;
+            left: 10%;
+            width: 30%O;
+            height: 25%;
+        }
+
+        .ai-box.dist-2 {
+            border: 2px solid red;
+            bottom: 5%;
+            right: 10%;
+            width: 35%;
+            height: 30%;
+        }
+
         .reveal-text {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 500;
             letter-spacing: 1px;
             color: #e4e4e7;
             display: none;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
+            margin-top: 10px;
         }
 
         .reveal-text.visible {
             display: block;
-            opacity: 1;
-            transform: translateY(0);
         }
 
         .hidden {
@@ -138,11 +199,10 @@ html_code = """<!DOCTYPE html>
 <body>
 
 <div class="container">
-    <!-- Step 1: Geheime Kartenauswahl mit automatischem Kopieren in die Zwischenablage -->
+    <!-- Step 1: Geheime Kartenauswahl -->
     <div id="setup-section" class="input-group">
         <div id="status">Geheimes Setup</div>
         <select id="secret-card-select">
-            <!-- Pik -->
             <option value="1219-Z3672">Pik Ass (PA)</option>
             <option value="1219-Z3673">Pik 2</option>
             <option value="1219-Z3674">Pik 3</option>
@@ -156,7 +216,6 @@ html_code = """<!DOCTYPE html>
             <option value="1219-Z3682">Pik Bube (PB)</option>
             <option value="1219-Z3683">Pik Dame (PD)</option>
             <option value="1219-Z3684">Pik König (PK)</option>
-            <!-- Herz -->
             <option value="1219-Z3685">Herz Ass (HA)</option>
             <option value="1219-Z3686">Herz 2</option>
             <option value="1219-Z3687">Herz 3</option>
@@ -170,7 +229,6 @@ html_code = """<!DOCTYPE html>
             <option value="1219-Z3695">Herz Bube (HB)</option>
             <option value="1219-Z3696">Herz Dame (HD)</option>
             <option value="1219-Z3697">Herz König (HK)</option>
-            <!-- Kreuz -->
             <option value="1219-Z3698">Kreuz König (KK)</option>
             <option value="1219-Z3699">Kreuz Dame (KD)</option>
             <option value="1219-Z3700">Kreuz Bube (KB)</option>
@@ -184,7 +242,6 @@ html_code = """<!DOCTYPE html>
             <option value="1219-Z3708">Kreuz 3</option>
             <option value="1219-Z3709">Kreuz 2</option>
             <option value="1219-Z3710">Kreuz Ass (KA)</option>
-            <!-- Karo -->
             <option value="1219-Z3711">Karo König</option>
             <option value="1219-Z3712">Karo Dame</option>
             <option value="1219-Z3713">Karo Bube</option>
@@ -217,7 +274,16 @@ html_code = """<!DOCTYPE html>
         </div>
         
         <div class="action-container">
-            <button id="find-btn" onclick="showLocation()" class="hidden">Position finden</button>
+            <button id="find-btn" onclick="startCameraScan()">Position finden</button>
+            
+            <!-- Kamera & KI Boxen -->
+            <div id="camera-box" class="camera-container">
+                <video id="video-feed" autoplay playsinline></video>
+                <div class="ai-box dist-1"></div>
+                <div class="ai-box dist-2"></div>
+                <div class="ai-box target"></div>
+            </div>
+
             <div id="location-text" class="reveal-text">
                 Die Karte ist im Geldbeutel
             </div>
@@ -248,12 +314,10 @@ html_code = """<!DOCTYPE html>
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastUpdate = 0;
 
-    // Schritt 1: Karte bestätigen, Code in Zwischenablage kopieren und zur Eingabe wechseln
     function confirmCard() {
         const selectedCode = document.getElementById('secret-card-select').value;
         targetCardApi = cardDatabase[selectedCode];
 
-        // Code in die Zwischenablage kopieren
         navigator.clipboard.writeText(selectedCode).then(() => {
             console.log("Code kopiert: " + selectedCode);
         }).catch(err => {
@@ -264,7 +328,6 @@ html_code = """<!DOCTYPE html>
         document.getElementById('input-section').classList.remove('hidden');
     }
 
-    // Schritt 2: Code eingeben und Performance starten
     function startMagic() {
         const codeInput = document.getElementById('code-input').value.trim().toUpperCase();
         
@@ -330,16 +393,32 @@ html_code = """<!DOCTYPE html>
             cardImg.style.transform = "scale(1)";
             cardImg.style.opacity = "1";
             document.getElementById('status-perf').innerText = "Matrix korrigiert";
-            
-            document.getElementById('find-btn').classList.remove('hidden');
         }, 300);
     }
 
-    function showLocation() {
-        document.getElementById('find-btn').classList.add('hidden');
-        const locationText = document.getElementById('location-text');
-        locationText.classList.add('visible');
-        document.getElementById('status-perf').innerText = "Standort lokalisiert";
+    // Kamera starten und KI-Scan simulieren
+    function startCameraScan() {
+        document.getElementById('find-btn').style.display = 'none';
+        const cameraBox = document.getElementById('camera-box');
+        cameraBox.style.display = 'block';
+        document.getElementById('status-perf').innerText = "KI-Objekterkennung aktiv...";
+
+        // Zugriff auf die Kamera anfordern
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(stream => {
+                const videoElement = document.getElementById('video-feed');
+                videoElement.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Kamera-Fehler: ", err);
+                // Fallback falls Kamera blockiert ist
+            });
+
+        // Nach 2,5 Sekunden den Text einblenden
+        setTimeout(() => {
+            document.getElementById('location-text').classList.add('visible');
+            document.getElementById('status-perf').innerText = "Ziel erfasst";
+        }, 2500);
     }
 </script>
 

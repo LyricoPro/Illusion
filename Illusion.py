@@ -25,15 +25,15 @@ html_code = """<!DOCTYPE html>
         
         #MainMenu, header, footer { visibility: hidden !important; }
 
-        /* Geheimer Zuschauer-Modus Button oben links (extrem dezent/unsichtbar) */
-        .secret-bypass {
+        /* Unsichtbarer Button oben links zum Hin- und Herschalten */
+        .secret-toggle {
             position: fixed;
             top: 10px;
             left: 10px;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             z-index: 999;
-            opacity: 0.02;
+            opacity: 0.01;
             cursor: pointer;
         }
 
@@ -108,7 +108,6 @@ html_code = """<!DOCTYPE html>
             transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.6s ease, opacity 0.4s ease;
         }
 
-        /* Visueller Morphing-Effekt */
         .morphing {
             transform: scale(0.7) rotate(5deg);
             filter: blur(8px);
@@ -157,8 +156,8 @@ html_code = """<!DOCTYPE html>
 </head>
 <body>
 
-    <!-- Geheimer Button (Zuschauermodus) oben links -->
-    <div class="secret-bypass" onclick="enableSpectatorMode()" title="Zuschauermodus"></div>
+    <!-- Unsichtbarer Schalter oben links (zum Hin- und Herschalten) -->
+    <div class="secret-toggle" onclick="toggleScreen()" title="Switch"></div>
 
 <div class="container">
     <!-- Step 1: Geheimes Setup (Karte & Satz auswählen) -->
@@ -246,7 +245,7 @@ html_code = """<!DOCTYPE html>
         
         <div class="action-container">
             <button id="find-btn" onclick="showLocation()" class="hidden">Position finden</button>
-            <div id="location-text" class="reveal-text" id="final-reveal-text"></div>
+            <div id="location-text" class="reveal-text"></div>
         </div>
     </div>
 </div>
@@ -267,12 +266,11 @@ html_code = """<!DOCTYPE html>
         "1219-Z3719": "5D", "1219-Z3720": "4D", "1219-Z3721": "3D", "1219-Z3722": "2D", "1219-Z3723": "AD"
     };
 
-    // Pool von zufälligen Startkarten (damit es jedes Mal anders ist)
     const randomWrongCards = [
-        "https://deckofcardsapi.com/static/img/0C.png", // Kreuz 10
-        "https://deckofcardsapi.com/static/img/5H.png", // Herz 5
-        "https://deckofcardsapi.com/static/img/2S.png", // Pik 2
-        "https://deckofcardsapi.com/static/img/KD.png"  // Karo König
+        "https://deckofcardsapi.com/static/img/0C.png",
+        "https://deckofcardsapi.com/static/img/5H.png",
+        "https://deckofcardsapi.com/static/img/2S.png",
+        "https://deckofcardsapi.com/static/img/KD.png"
     ];
 
     let targetCardApi = "AS";
@@ -281,13 +279,24 @@ html_code = """<!DOCTYPE html>
     
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastUpdate = 0;
-    let shakeProgress = 0; // Zähler für das längere Schütteln (3-4 Sek)
+    let shakeProgress = 0;
 
-    // Geheimer Zuschauermodus per Klick oben links
-    function enableSpectatorMode() {
-        document.getElementById('setup-section').classList.add('hidden');
-        document.getElementById('input-section').classList.remove('hidden');
-        document.getElementById('status-input').innerText = "Zuschauermodus aktiv";
+    // Schaltet nahtlos zwischen Setup-Screen und Eingabe-Screen hin und her
+    function toggleScreen() {
+        const setupSec = document.getElementById('setup-section');
+        const inputSec = document.getElementById('input-section');
+        const magicSec = document.getElementById('magic-section');
+
+        // Wenn wir im Magic-Screen sind oder im Input, schalte zurück zum Setup (oder umgekehrt)
+        if (!setupSec.classList.contains('hidden')) {
+            setupSec.classList.add('hidden');
+            inputSec.classList.remove('hidden');
+            document.getElementById('status-input').innerText = "Bereit für Eingabe";
+        } else {
+            inputSec.classList.add('hidden');
+            magicSec.classList.add('hidden');
+            setupSec.classList.remove('hidden');
+        }
     }
 
     function confirmCard() {
@@ -295,11 +304,11 @@ html_code = """<!DOCTYPE html>
         targetCardApi = cardDatabase[selectedCode];
         selectedSentence = document.getElementById('secret-sentence-select').value;
 
-        // Code in die Zwischenablage kopieren
         navigator.clipboard.writeText(selectedCode).catch(err => console.error(err));
 
         document.getElementById('setup-section').classList.add('hidden');
         document.getElementById('input-section').classList.remove('hidden');
+        document.getElementById('status-input').innerText = "Bereit für Eingabe";
     }
 
     function startMagic() {
@@ -315,7 +324,6 @@ html_code = """<!DOCTYPE html>
         document.getElementById('input-section').classList.add('hidden');
         document.getElementById('magic-section').classList.remove('hidden');
 
-        // Wähle jedes Mal eine andere zufällige Startkarte aus
         const randomStart = randomWrongCards[Math.floor(Math.random() * randomWrongCards.length)];
         document.getElementById('card-display').src = randomStart;
         currentState = 'wrong';
@@ -336,7 +344,6 @@ html_code = """<!DOCTYPE html>
         }
     }
 
-    // Schüttel-Erkennung angepasst für 3-4 Sekunden langes Schütteln
     function handleMotion(e) {
         if (currentState !== 'wrong') return;
         
@@ -350,12 +357,11 @@ html_code = """<!DOCTYPE html>
             
             let speed = Math.abs(current.x + current.y + current.z - lastX - lastY - lastZ) / diffTime * 10000;
             
-            // Wenn das Handy aktiv geschüttelt wird
             if (speed > 350) {
-                shakeProgress += 1; // Zählt hoch (ca. 15-20 Punkte für 3-4 Sekunden)
+                shakeProgress += 1;
                 document.getElementById('status-perf').innerText = "Kalibriere Frequenz... (" + Math.min(Math.round((shakeProgress/18)*100), 100) + "%)";
                 
-                if (shakeProgress >= 18) { // ca. 3-4 Sekunden kontinuierliches Schütteln
+                if (shakeProgress >= 18) {
                     morphCard();
                 }
             }
@@ -365,12 +371,10 @@ html_code = """<!DOCTYPE html>
         }
     }
 
-    // Schöner visueller Morphing-Effekt
     function morphCard() {
         currentState = 'right';
         const cardImg = document.getElementById('card-display');
         
-        // Sanfter Ein- und Auszoom-Effekt mit Unschärfe
         cardImg.classList.add('morphing');
 
         setTimeout(() => {
@@ -378,7 +382,6 @@ html_code = """<!DOCTYPE html>
             cardImg.classList.remove('morphing');
             document.getElementById('status-perf').innerText = "Matrix korrigiert";
             
-            // Button "Position finden" anzeigen
             document.getElementById('find-btn').classList.remove('hidden');
         }, 600);
     }
@@ -386,7 +389,7 @@ html_code = """<!DOCTYPE html>
     function showLocation() {
         document.getElementById('find-btn').classList.add('hidden');
         const locationText = document.getElementById('location-text');
-        locationText.innerText = selectedSentence; // Setzt den im Setup ausgewählten Satz ein
+        locationText.innerText = selectedSentence;
         locationText.classList.add('visible');
         document.getElementById('status-perf').innerText = "Standort lokalisiert";
     }

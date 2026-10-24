@@ -7,7 +7,7 @@ html_code = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Psychometric Resonator</title>
+    <title>Magic Matrix</title>
     <style>
         html, body {
             margin: 0;
@@ -41,7 +41,7 @@ html_code = """<!DOCTYPE html>
             width: 100%;
         }
 
-        input, button {
+        input {
             width: 100% !important;
             height: 48px !important;
             padding: 0 14px !important;
@@ -62,10 +62,16 @@ html_code = """<!DOCTYPE html>
         }
 
         button {
-            background: #18181b !important;
+            width: 100% !important;
+            height: 48px !important;
+            padding: 0 14px !important;
+            font-size: 16px !important;
+            border-radius: 10px !important;
             border: 1px solid #3f3f46 !important;
+            background: #18181b !important;
             cursor: pointer;
             font-weight: 500;
+            color: #ffffff !important;
         }
 
         button:active {
@@ -84,15 +90,15 @@ html_code = """<!DOCTYPE html>
             width: 150px;
             border-radius: 12px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.9);
-            transition: transform 0.3s ease;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
         }
 
-        .code-display {
-            margin-top: 12px;
-            font-family: monospace;
-            font-size: 16px;
-            letter-spacing: 2px;
-            color: #a1a1aa;
+        .action-container {
+            margin-top: 15px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .arrow-container {
@@ -132,59 +138,66 @@ html_code = """<!DOCTYPE html>
 
 <div class="container">
     <div id="input-section" class="input-group">
-        <input type="number" id="pos-input" placeholder="Geforcte Position im Deck">
-        <input type="date" id="date-input">
-        <button onclick="startMagic()">Resonanz berechnen</button>
+        <input type="text" id="code-input" placeholder="Code eingeben">
+        <button onclick="startMagic()">Analysieren</button>
     </div>
 
     <div id="magic-section" class="hidden input-group">
-        <div id="status">Psychometrische Signatur aktiv</div>
+        <div id="status">Scanne Frequenz...</div>
         <div class="card-box">
             <img id="card-display" class="card-img" src="" alt="Card">
-            <div id="code-text" class="code-display"></div>
         </div>
         
-        <div id="arrow-box" class="arrow-container">
-            <svg id="vector-arrow" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <polyline points="19 12 12 19 5 12"></polyline>
-            </svg>
+        <div id="action-box" class="action-container">
+            <button id="find-btn" onclick="showArrow()">Position finden</button>
+            <div id="arrow-box" class="arrow-container">
+                <svg id="vector-arrow" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+    const wrongCard = "https://deckofcardsapi.com/static/img/0C.png";
+    const rightCard = "https://deckofcardsapi.com/static/img/4S.png";
+
+    let currentState = 'wrong';
     let currentRotation = 0;
     let targetRotation = 0;
-    let magicActive = false;
+    
+    let lastX = 0, lastY = 0, lastZ = 0;
+    let lastUpdate = 0;
 
     function startMagic() {
-        const posVal = document.getElementById('pos-input').value;
-        const dateVal = document.getElementById('date-input').value;
-        
-        if(!posVal || !dateVal) {
-            alert("Bitte ausfüllen!");
+        const code = document.getElementById('code-input').value.trim();
+        if(!code) {
+            alert("Bitte Code eingeben!");
             return;
         }
 
         document.getElementById('input-section').classList.add('hidden');
         document.getElementById('magic-section').classList.remove('hidden');
 
-        // Dynamisches Generieren des Codes basierend auf den Eingaben
-        const dateNumbers = dateVal.replace(/-/g, '');
-        const generatedCode = "4S-" + dateNumbers.slice(-4) + "-" + posVal;
+        document.getElementById('card-display').src = wrongCard;
+        currentState = 'wrong';
 
-        // Bild der Pikvier anzeigen
-        document.getElementById('card-display').src = "https://deckofcardsapi.com/static/img/4S.png";
-        document.getElementById('code-text').innerText = generatedCode;
-        document.getElementById('status').innerText = "Resonanz gefunden";
-
-        magicActive = true;
-        document.getElementById('arrow-box').classList.add('visible');
         initSensors();
     }
 
     function initSensors() {
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission().then(response => {
+                if (response == 'granted') {
+                    window.addEventListener('devicemotion', handleMotion);
+                }
+            }).catch(console.error);
+        } else {
+            window.addEventListener('devicemotion', handleMotion);
+        }
+
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission().then(response => {
                 if (response == 'granted') {
@@ -196,6 +209,49 @@ html_code = """<!DOCTYPE html>
         }
     }
 
+    function handleMotion(e) {
+        if (currentState !== 'wrong') return;
+        
+        let current = e.accelerationIncludingGravity;
+        if (!current) return;
+        
+        let currentTime = new Date().getTime();
+        if ((currentTime - lastUpdate) > 100) {
+            let diffTime = currentTime - lastUpdate;
+            lastUpdate = currentTime;
+            
+            let speed = Math.abs(current.x + current.y + current.z - lastX - lastY - lastZ) / diffTime * 10000;
+            
+            if (speed > 500) {
+                morphCard();
+            }
+            lastX = current.x;
+            lastY = current.y;
+            lastZ = current.z;
+        }
+    }
+
+    function morphCard() {
+        currentState = 'right';
+        const cardImg = document.getElementById('card-display');
+        
+        cardImg.style.transform = "scale(0.8)";
+        cardImg.style.opacity = "0.2";
+
+        setTimeout(() => {
+            cardImg.src = rightCard;
+            cardImg.style.transform = "scale(1)";
+            cardImg.style.opacity = "1";
+            document.getElementById('status').innerText = "Matrix korrigiert";
+        }, 300);
+    }
+
+    function showArrow() {
+        document.getElementById('arrow-box').classList.add('visible');
+        document.getElementById('find-btn').style.display = 'none';
+        document.getElementById('status').innerText = "Standort lokalisiert";
+    }
+
     function handleOrientation(e) {
         let alpha = e.alpha; 
         if (alpha !== null) {
@@ -205,7 +261,7 @@ html_code = """<!DOCTYPE html>
 
     function animatePhysics() {
         const arrow = document.getElementById('vector-arrow');
-        if (arrow && magicActive) {
+        if (arrow) {
             if (Math.abs(targetRotation - currentRotation) < 0.1) {
                 targetRotation *= 0.93;
             }

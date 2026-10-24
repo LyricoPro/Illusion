@@ -31,6 +31,8 @@ html_code = """<!DOCTYPE html>
             max-width: 320px;
             padding: 0 20px;
             box-sizing: border-box;
+            z-index: 10;
+            position: relative;
         }
 
         .input-group {
@@ -105,82 +107,103 @@ html_code = """<!DOCTYPE html>
             gap: 12px;
         }
 
-        /* Kamera- und KI-Boxen Layout */
-        .camera-container {
-            position: relative;
-            width: 100%;
-            max-width: 280px;
-            height: 200px;
-            margin-top: 10px;
-            border-radius: 12px;
-            overflow: hidden;
-            display: none;
-            background: #111;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
-
-        #video-feed {
-            width: 100%;
-            height: 100%;
+        /* Vollbild-Kamera Hintergrund */
+        #fullscreen-camera {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             object-fit: cover;
+            z-index: 1;
+            display: none;
         }
 
-        /* KI Bounding Boxes */
-        .ai-box {
-            position: absolute;
-            border: 2px solid red;
-            box-sizing: border-box;
+        /* HUD Overlay für KI-Scanning */
+        .hud-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
             pointer-events: none;
+            display: none;
         }
 
-        .ai-box.target {
-            border: 2px solid #22c55e;
-            top: 30%;
-            left: 25%;
-            width: 50%;
-            height: 40%;
-        }
-
-        .ai-box.target::after {
-            content: "Objekt gefunden";
+        /* Gefälschte rote Erkennungsboxen */
+        .ai-box-red {
             position: absolute;
-            top: -18px;
+            border: 2px dashed rgba(239, 68, 68, 0.8);
+            background: rgba(239, 68, 68, 0.05);
+            animation: pulseRed 1.5s infinite;
+        }
+
+        /* Grüne Zielbox für den Geldbeutel */
+        .ai-box-green {
+            position: absolute;
+            border: 2px solid #22c55e;
+            background: rgba(34, 197, 94, 0.15);
+            top: 35%;
+            left: 20%;
+            width: 60%;
+            height: 35%;
+            opacity: 0;
+            transform: scale(1.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ai-box-green.detected {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .ai-box-green::after {
+            content: "GELDBEUTEL - TREFFER (99.8%)";
+            position: absolute;
+            top: -24px;
             left: 0;
             background: #22c55e;
-            color: black;
-            font-size: 9px;
-            font-weight: bold;
-            padding: 1px 4px;
-            border-radius: 2px;
-        }
-
-        .ai-box.dist-1 {
-            border: 2px solid red;
-            top: 10%;
-            left: 10%;
-            width: 30%O;
-            height: 25%;
-        }
-
-        .ai-box.dist-2 {
-            border: 2px solid red;
-            bottom: 5%;
-            right: 10%;
-            width: 35%;
-            height: 30%;
-        }
-
-        .reveal-text {
-            font-size: 16px;
-            font-weight: 500;
+            color: #000;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
             letter-spacing: 1px;
-            color: #e4e4e7;
-            display: none;
-            margin-top: 10px;
         }
 
-        .reveal-text.visible {
-            display: block;
+        @keyframes pulseRed {
+            0% { opacity: 0.4; }
+            50% { opacity: 0.9; }
+            100% { opacity: 0.4; }
+        }
+
+        .reveal-banner {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(9, 9, 11, 0.85);
+            border: 1px solid #27272a;
+            padding: 14px 24px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            z-index: 5;
+            opacity: 0;
+            transition: all 0.5s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            width: 85%;
+            max-width: 340px;
+            text-align: center;
+        }
+
+        .reveal-banner.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
 
         .hidden {
@@ -197,6 +220,22 @@ html_code = """<!DOCTYPE html>
     </style>
 </head>
 <body>
+
+    <!-- Vollbild-Kamera und HUD (werden nach Klick aktiviert) -->
+    <video id="fullscreen-camera" autoplay playsinline></video>
+    
+    <div id="hud-overlay" class="hud-overlay">
+        <!-- Nebensächliche rote KI-Boxen -->
+        <div class="ai-box-red" style="top: 15%; left: 10%; width: 25%; height: 20%;"></div>
+        <div class="ai-box-red" style="bottom: 12%; right: 15%; width: 30%; height: 25%;"></div>
+        
+        <!-- Haupt-Zielbox für den Geldbeutel -->
+        <div id="target-box" class="ai-box-green"></div>
+    </div>
+
+    <div id="location-banner" class="reveal-banner">
+        Die Karte ist im Geldbeutel
+    </div>
 
 <div class="container">
     <!-- Step 1: Geheime Kartenauswahl -->
@@ -268,25 +307,13 @@ html_code = """<!DOCTYPE html>
 
     <!-- Step 3: Magic Execution Screen -->
     <div id="magic-section" class="hidden input-group">
-        <div id="status-perf">Scanne Frequenz...</div>
+        <div id="status">Scanne Frequenz...</div>
         <div class="card-box">
             <img id="card-display" class="card-img" src="" alt="Card">
         </div>
         
         <div class="action-container">
-            <button id="find-btn" onclick="startCameraScan()">Position finden</button>
-            
-            <!-- Kamera & KI Boxen -->
-            <div id="camera-box" class="camera-container">
-                <video id="video-feed" autoplay playsinline></video>
-                <div class="ai-box dist-1"></div>
-                <div class="ai-box dist-2"></div>
-                <div class="ai-box target"></div>
-            </div>
-
-            <div id="location-text" class="reveal-text">
-                Die Karte ist im Geldbeutel
-            </div>
+            <button id="find-btn" onclick="activateFullscreenAI()">Position finden</button>
         </div>
     </div>
 </div>
@@ -313,6 +340,24 @@ html_code = """<!DOCTYPE html>
     
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastUpdate = 0;
+
+    function playBeep() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Hoher Ton (A5)
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        } catch(e) {
+            console.log("Audio Kontext blockiert", e);
+        }
+    }
 
     function confirmCard() {
         const selectedCode = document.getElementById('secret-card-select').value;
@@ -392,33 +437,35 @@ html_code = """<!DOCTYPE html>
             cardImg.src = `https://deckofcardsapi.com/static/img/${targetCardApi}.png`;
             cardImg.style.transform = "scale(1)";
             cardImg.style.opacity = "1";
-            document.getElementById('status-perf').innerText = "Matrix korrigiert";
+            document.getElementById('status').innerText = "Matrix korrigiert";
         }, 300);
     }
 
-    // Kamera starten und KI-Scan simulieren
-    function startCameraScan() {
-        document.getElementById('find-btn').style.display = 'none';
-        const cameraBox = document.getElementById('camera-box');
-        cameraBox.style.display = 'block';
-        document.getElementById('status-perf').innerText = "KI-Objekterkennung aktiv...";
+    // Vollbild-Kamera starten und KI-Interface aktivieren
+    function activateFullscreenAI() {
+        // UI Elemente der App ausblenden, damit nur Kamera + HUD sichtbar sind
+        document.querySelector('.container').style.display = 'none';
 
-        // Zugriff auf die Kamera anfordern
+        const videoElement = document.getElementById('fullscreen-camera');
+        videoElement.style.display = 'block';
+        document.getElementById('hud-overlay').style.display = 'block';
+
+        // Kamera-Stream anfordern
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
             .then(stream => {
-                const videoElement = document.getElementById('video-feed');
                 videoElement.srcObject = stream;
             })
             .catch(err => {
                 console.error("Kamera-Fehler: ", err);
-                // Fallback falls Kamera blockiert ist
+                alert("Kamera-Zugriff verweigert oder nicht verfügbar.");
             });
 
-        // Nach 2,5 Sekunden den Text einblenden
+        // Nach kurzer Scan-Zeit (1.2 Sek) rastet die grüne Box ein, piept und zeigt den Text
         setTimeout(() => {
-            document.getElementById('location-text').classList.add('visible');
-            document.getElementById('status-perf').innerText = "Ziel erfasst";
-        }, 2500);
+            playBeep();
+            document.getElementById('target-box').classList.add('detected');
+            document.getElementById('location-banner').classList.add('visible');
+        }, 1200);
     }
 </script>
 

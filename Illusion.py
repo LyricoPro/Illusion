@@ -93,18 +93,28 @@ html_code = """<!DOCTYPE html>
             transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
         }
 
+        .action-container {
+            margin-top: 20px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
         .reveal-text {
-            margin-top: 25px;
             font-size: 18px;
             font-weight: 500;
             letter-spacing: 1px;
             color: #e4e4e7;
+            display: none;
             opacity: 0;
             transform: translateY(10px);
             transition: opacity 0.6s ease, transform 0.6s ease;
         }
 
         .reveal-text.visible {
+            display: block;
             opacity: 1;
             transform: translateY(0);
         }
@@ -136,14 +146,16 @@ html_code = """<!DOCTYPE html>
             <img id="card-display" class="card-img" src="" alt="Card">
         </div>
         
-        <div id="location-text" class="reveal-text">
-            Die Karte ist im Geldbeutel
+        <div class="action-container">
+            <button id="find-btn" onclick="showLocation()" class="hidden">Position finden</button>
+            <div id="location-text" class="reveal-text">
+                Die Karte ist im Geldbeutel
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Vollständige Code-Datenbank für alle 52 Karten
     const cardDatabase = {
         // Pik (Spades)
         "1219-Z3672": "AS", "1219-Z3673": "2S", "1219-Z3674": "3S", "1219-Z3675": "4S",
@@ -236,9 +248,16 @@ html_code = """<!DOCTYPE html>
             cardImg.style.opacity = "1";
             document.getElementById('status').innerText = "Matrix korrigiert";
             
-            // Text sanft einblenden
-            document.getElementById('location-text').classList.add('visible');
+            // Zeige den Button "Position finden" erst nach der Kartenverwandlung
+            document.getElementById('find-btn').classList.remove('hidden');
         }, 300);
+    }
+
+    function showLocation() {
+        document.getElementById('find-btn').classList.add('hidden');
+        const locationText = document.getElementById('location-text');
+        locationText.classList.add('visible');
+        document.getElementById('status').innerText = "Standort lokalisiert";
     }
 </script>
 

@@ -131,8 +131,7 @@ html_code = """<!DOCTYPE html>
 
 <div class="container">
     <div id="input-section" class="input-group">
-        <input type="text" id="code-input" placeholder="Code eingeben">
-        <input type="text" id="pos-input" placeholder="Ungefahre Position im Deck">
+        <input type="number" id="pos-input" placeholder="Position im Deck (z.B. 14)">
         <input type="date" id="date-input">
         <button onclick="startMagic()">Matrix berechnen</button>
     </div>
@@ -156,8 +155,14 @@ html_code = """<!DOCTYPE html>
 <script>
     const cardStargazer = "https://deckofcardsapi.com/static/img/AS.png"; 
     const cardArchangels = "https://deckofcardsapi.com/static/img/AS.png"; 
+    const wrongCards = [
+        "https://deckofcardsapi.com/static/img/0C.png",
+        "https://deckofcardsapi.com/static/img/KH.png",
+        "https://deckofcardsapi.com/static/img/JD.png"
+    ];
 
-    let currentState = 'stargazer';
+    let currentState = 'ready';
+    let isAllowedToMorph = true;
     
     let currentRotation = 0;
     let targetRotation = 0;
@@ -166,19 +171,34 @@ html_code = """<!DOCTYPE html>
     let lastUpdate = 0;
 
     function startMagic() {
-        const code = document.getElementById('code-input').value.trim();
+        const posVal = parseInt(document.getElementById('pos-input').value);
+        const dateVal = document.getElementById('date-input').value;
         
-        if(!code) {
-            alert("Bitte gib einen Code ein!");
+        if(isNaN(posVal) || !dateVal) {
+            alert("Bitte Position und Geburtsdatum eingeben!");
             return;
         }
 
         document.getElementById('input-section').classList.add('hidden');
         document.getElementById('magic-section').classList.remove('hidden');
 
-        document.getElementById('card-display').src = cardStargazer;
-        document.getElementById('code-text').innerText = code;
+        // Logik für Position über 35: Falsche Karte, kein Morphing erlaubt
+        if (posVal > 35) {
+            isAllowedToMorph = false;
+            currentState = 'wrong';
+            let randomWrong = wrongCards[Math.floor(Math.random() * wrongCards.length)];
+            document.getElementById('card-display').src = randomWrong;
+            document.getElementById('code-text').innerText = "ERR-" + posVal;
+            document.getElementById('status').innerText = "Keine Resonanz gefunden";
+            return;
+        }
+
+        // Normale magische Bedingung (Position <= 35): Generiert automatisch den Stargazer Code[cite: 1]
+        isAllowedToMorph = true;
         currentState = 'stargazer';
+        document.getElementById('card-display').src = cardStargazer;
+        document.getElementById('code-text').innerText = "1219-Z3672";[cite: 1]
+        document.getElementById('status').innerText = "Stargazer Frequenz aktiv";
 
         initSensors();
     }
@@ -206,6 +226,8 @@ html_code = """<!DOCTYPE html>
     }
 
     function handleMotion(e) {
+        if (!isAllowedToMorph) return; // Wenn Position > 35, passiert beim Schütteln absolut nichts!
+        
         let current = e.accelerationIncludingGravity;
         if (!current) return;
         
@@ -234,10 +256,10 @@ html_code = """<!DOCTYPE html>
         cardImg.style.opacity = "0.2";
 
         setTimeout(() => {
-            codeText.innerText = "0423-D3396";
+            codeText.innerText = "0423-D3396";[cite: 2]
             document.getElementById('status').innerText = "Matrix synchronisiert";
             
-            cardImg.src = cardArchangels;
+            cardImg.src = cardArchangels;[cite: 2]
             cardImg.style.transform = "scale(1)";
             cardImg.style.opacity = "1";
             
@@ -249,7 +271,6 @@ html_code = """<!DOCTYPE html>
         if (currentState !== 'archangels') return;
         
         let alpha = e.alpha; 
-        
         if (alpha !== null) {
             targetRotation = (alpha % 360) * 0.5;
         }

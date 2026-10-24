@@ -93,32 +93,20 @@ html_code = """<!DOCTYPE html>
             transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
         }
 
-        .action-container {
-            margin-top: 15px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .arrow-container {
-            margin-top: 15px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .reveal-text {
+            margin-top: 25px;
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: #e4e4e7;
             opacity: 0;
-            transition: opacity 0.4s ease;
+            transform: translateY(10px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
         }
 
-        .arrow-container.visible {
+        .reveal-text.visible {
             opacity: 1;
-        }
-
-        svg {
-            width: 40px;
-            height: 40px;
-            filter: drop-shadow(0 2px 8px rgba(56, 189, 248, 0.4));
+            transform: translateY(0);
         }
 
         .hidden {
@@ -148,20 +136,14 @@ html_code = """<!DOCTYPE html>
             <img id="card-display" class="card-img" src="" alt="Card">
         </div>
         
-        <div id="action-box" class="action-container">
-            <button id="find-btn" onclick="showArrow()">Position finden</button>
-            <div id="arrow-box" class="arrow-container">
-                <svg id="vector-arrow" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <polyline points="19 12 12 19 5 12"></polyline>
-                </svg>
-            </div>
+        <div id="location-text" class="reveal-text">
+            Die Karte ist im Geldbeutel
         </div>
     </div>
 </div>
 
 <script>
-    // Vollständige Code-Datenbank für alle 52 Karten (Codes 1219-Z3672 bis 1219-Z3723)
+    // Vollständige Code-Datenbank für alle 52 Karten
     const cardDatabase = {
         // Pik (Spades)
         "1219-Z3672": "AS", "1219-Z3673": "2S", "1219-Z3674": "3S", "1219-Z3675": "4S",
@@ -181,12 +163,10 @@ html_code = """<!DOCTYPE html>
         "1219-Z3719": "5D", "1219-Z3720": "4D", "1219-Z3721": "3D", "1219-Z3722": "2D", "1219-Z3723": "AD"
     };
 
-    const wrongCard = "https://deckofcardsapi.com/static/img/0C.png"; // Falsche Startkarte (Kreuz 10)
+    const wrongCard = "https://deckofcardsapi.com/static/img/0C.png";
     let targetCardApi = "AS";
     let currentState = 'wrong';
     
-    let currentRotation = 0;
-    let targetRotation = 0;
     let lastX = 0, lastY = 0, lastZ = 0;
     let lastUpdate = 0;
 
@@ -198,13 +178,11 @@ html_code = """<!DOCTYPE html>
             return;
         }
 
-        // Zielkarte exakt aus der Datenbank laden
         targetCardApi = cardDatabase[codeInput];
 
         document.getElementById('input-section').classList.add('hidden');
         document.getElementById('magic-section').classList.remove('hidden');
 
-        // Erst die falsche Karte anzeigen
         document.getElementById('card-display').src = wrongCard;
         currentState = 'wrong';
 
@@ -221,19 +199,8 @@ html_code = """<!DOCTYPE html>
         } else {
             window.addEventListener('devicemotion', handleMotion);
         }
-
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission().then(response => {
-                if (response == 'granted') {
-                    window.addEventListener('deviceorientation', handleOrientation);
-                }
-            }).catch(console.error);
-        } else {
-            window.addEventListener('deviceorientation', handleOrientation);
-        }
     }
 
-    // Schütteln löst die Kartenverwandlung aus
     function handleMotion(e) {
         if (currentState !== 'wrong') return;
         
@@ -264,40 +231,15 @@ html_code = """<!DOCTYPE html>
         cardImg.style.opacity = "0.2";
 
         setTimeout(() => {
-            // Zeigt exakt die Karte zum eingegebenen Code (z.B. Pik Bube bei 1219-Z3682)
             cardImg.src = `https://deckofcardsapi.com/static/img/${targetCardApi}.png`;
             cardImg.style.transform = "scale(1)";
             cardImg.style.opacity = "1";
             document.getElementById('status').innerText = "Matrix korrigiert";
+            
+            // Text sanft einblenden
+            document.getElementById('location-text').classList.add('visible');
         }, 300);
     }
-
-    function showArrow() {
-        document.getElementById('arrow-box').classList.add('visible');
-        document.getElementById('find-btn').style.display = 'none';
-        document.getElementById('status').innerText = "Standort lokalisiert";
-    }
-
-    function handleOrientation(e) {
-        let alpha = e.alpha; 
-        if (alpha !== null) {
-            targetRotation = (alpha % 360) * 0.5;
-        }
-    }
-
-    function animatePhysics() {
-        const arrow = document.getElementById('vector-arrow');
-        if (arrow) {
-            if (Math.abs(targetRotation - currentRotation) < 0.1) {
-                targetRotation *= 0.93;
-            }
-            
-            currentRotation += (targetRotation - currentRotation) * 0.08;
-            arrow.style.transform = `rotate(${currentRotation}deg)`;
-        }
-        requestAnimationFrame(animatePhysics);
-    }
-    requestAnimationFrame(animatePhysics);
 </script>
 
 </body>
